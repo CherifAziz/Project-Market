@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/weapon_data.gd" id="1_weapon_data"]
+
+[resource]
+script = ExtResource("1_weapon_data")
+display_name = "LIQUIDATOR-9"
+damage = 24.0
+rounds_per_minute = 760.0
+range = 48.0
+spread_degrees = 0.28
+tracer_color = Color(0.38, 0.965, 1, 1)
+muzzle_color = Color(0.72, 1, 1, 1)
+tracer_width = 0.038
+tracer_duration = 0.07
+camera_shake = 0.13
+

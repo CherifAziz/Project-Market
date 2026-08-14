@@ -1,0 +1,103 @@
+[gd_scene load_steps=11 format=3]
+
+[ext_resource type="Script" path="res://combat/damageable_target.gd" id="1_target"]
+
+[sub_resource type="CylinderShape3D" id="Shape_target"]
+radius = 0.48
+height = 1.5
+
+[sub_resource type="StandardMaterial3D" id="Mat_target"]
+albedo_color = Color(0.12, 0.015, 0.07, 1)
+metallic = 0.76
+roughness = 0.24
+emission_enabled = true
+emission = Color(0.45, 0.015, 0.16, 1)
+emission_energy_multiplier = 1.7
+
+[sub_resource type="StandardMaterial3D" id="Mat_accent"]
+albedo_color = Color(0.72, 0.035, 0.32, 1)
+metallic = 0.35
+roughness = 0.16
+emission_enabled = true
+emission = Color(1, 0.03, 0.38, 1)
+emission_energy_multiplier = 5.0
+
+[sub_resource type="StandardMaterial3D" id="Mat_dark"]
+albedo_color = Color(0.008, 0.012, 0.035, 1)
+metallic = 0.85
+roughness = 0.2
+
+[sub_resource type="CylinderMesh" id="Mesh_body"]
+material = SubResource("Mat_target")
+top_radius = 0.38
+bottom_radius = 0.48
+height = 1.15
+radial_segments = 10
+rings = 2
+
+[sub_resource type="CylinderMesh" id="Mesh_core"]
+material = SubResource("Mat_accent")
+top_radius = 0.13
+bottom_radius = 0.13
+height = 0.78
+radial_segments = 8
+
+[sub_resource type="TorusMesh" id="Mesh_ring"]
+material = SubResource("Mat_accent")
+inner_radius = 0.39
+outer_radius = 0.46
+rings = 12
+ring_segments = 6
+
+[sub_resource type="BoxMesh" id="Mesh_hp_back"]
+material = SubResource("Mat_dark")
+size = Vector3(0.7, 0.065, 0.055)
+
+[sub_resource type="BoxMesh" id="Mesh_hp_fill"]
+material = SubResource("Mat_accent")
+size = Vector3(0.62, 0.035, 0.06)
+
+[node name="DamageableTarget" type="StaticBody3D"]
+collision_layer = 2
+collision_mask = 0
+script = ExtResource("1_target")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+unique_name_in_owner = true
+position = Vector3(0, 0.73, 0)
+shape = SubResource("Shape_target")
+
+[node name="Visual" type="Node3D" parent="."]
+unique_name_in_owner = true
+
+[node name="Body" type="MeshInstance3D" parent="Visual"]
+position = Vector3(0, 0.61, 0)
+mesh = SubResource("Mesh_body")
+
+[node name="Core" type="MeshInstance3D" parent="Visual"]
+position = Vector3(0, 0.66, -0.38)
+rotation_degrees = Vector3(90, 0, 0)
+mesh = SubResource("Mesh_core")
+
+[node name="Rings" type="Node3D" parent="Visual"]
+unique_name_in_owner = true
+
+[node name="Lower" type="MeshInstance3D" parent="Visual/Rings"]
+position = Vector3(0, 0.34, 0)
+mesh = SubResource("Mesh_ring")
+
+[node name="Upper" type="MeshInstance3D" parent="Visual/Rings"]
+position = Vector3(0, 0.97, 0)
+rotation_degrees = Vector3(0, 35, 0)
+mesh = SubResource("Mesh_ring")
+
+[node name="HealthBar" type="Node3D" parent="Visual"]
+position = Vector3(0, 1.52, 0)
+
+[node name="Back" type="MeshInstance3D" parent="Visual/HealthBar"]
+mesh = SubResource("Mesh_hp_back")
+
+[node name="HPFill" type="MeshInstance3D" parent="Visual/HealthBar"]
+unique_name_in_owner = true
+position = Vector3(0, 0, -0.035)
+mesh = SubResource("Mesh_hp_fill")

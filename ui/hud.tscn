@@ -1,0 +1,156 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://ui/hud.gd" id="1_hud"]
+[ext_resource type="Script" path="res://ui/crosshair.gd" id="2_crosshair"]
+[ext_resource type="Shader" path="res://ui/screen_overlay.gdshader" id="3_overlay"]
+
+[sub_resource type="ShaderMaterial" id="Mat_overlay"]
+shader = ExtResource("3_overlay")
+
+[sub_resource type="StyleBoxFlat" id="Style_dash_back"]
+bg_color = Color(0.015, 0.025, 0.06, 0.82)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.12, 0.36, 0.43, 0.75)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="Style_dash_fill"]
+bg_color = Color(0.16, 0.88, 0.95, 0.92)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[node name="HUD" type="CanvasLayer"]
+layer = 10
+script = ExtResource("1_hud")
+
+[node name="ScreenOverlay" type="ColorRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+material = SubResource("Mat_overlay")
+color = Color(1, 1, 1, 1)
+
+[node name="TopLeft" type="MarginContainer" parent="."]
+offset_left = 34.0
+offset_top = 27.0
+offset_right = 360.0
+offset_bottom = 105.0
+
+[node name="VBox" type="VBoxContainer" parent="TopLeft"]
+layout_mode = 2
+theme_override_constants/separation = -2
+
+[node name="Title" type="Label" parent="TopLeft/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.92, 0.97, 1, 1)
+theme_override_colors/font_shadow_color = Color(1, 0.02, 0.28, 0.6)
+theme_override_constants/shadow_offset_x = 3
+theme_override_constants/shadow_offset_y = 2
+theme_override_font_sizes/font_size = 28
+text = "PROJECT / MARKET"
+
+[node name="Subtitle" type="Label" parent="TopLeft/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.29, 0.84, 0.9, 0.82)
+theme_override_font_sizes/font_size = 11
+text = "NIGHT MARKET  //  COMBAT SANDBOX  01"
+
+[node name="TopRight" type="VBoxContainer" parent="."]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -276.0
+offset_top = 30.0
+offset_right = -35.0
+offset_bottom = 105.0
+grow_horizontal = 0
+alignment = 2
+
+[node name="TargetLabel" type="Label" parent="TopRight"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.28, 0.56, 1)
+theme_override_font_sizes/font_size = 34
+text = "00"
+horizontal_alignment = 2
+
+[node name="SectorLabel" type="Label" parent="TopRight"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.65, 0.72, 0.86, 0.8)
+theme_override_font_sizes/font_size = 11
+text = "HOSTILE ASSETS"
+horizontal_alignment = 2
+
+[node name="Controls" type="VBoxContainer" parent="."]
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 34.0
+offset_top = -95.0
+offset_right = 355.0
+offset_bottom = -27.0
+grow_vertical = 0
+
+[node name="Weapon" type="Label" parent="Controls"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.86, 0.95, 1, 0.9)
+theme_override_font_sizes/font_size = 14
+text = "LIQUIDATOR-9  //  AUTO"
+
+[node name="Help" type="Label" parent="Controls"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.48, 0.58, 0.7, 0.78)
+theme_override_font_sizes/font_size = 11
+text = "WASD / ZQSD  MOVE     LMB  FIRE\nSPACE / SHIFT  DASH     R  RESET"
+
+[node name="DashPanel" type="VBoxContainer" parent="."]
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -125.0
+offset_top = -57.0
+offset_right = 125.0
+offset_bottom = -23.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_constants/separation = 4
+
+[node name="DashLabel" type="Label" parent="DashPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.55, 0.96, 1, 0.9)
+theme_override_font_sizes/font_size = 10
+text = "DASH  READY"
+horizontal_alignment = 1
+
+[node name="DashBar" type="ProgressBar" parent="DashPanel"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(250, 5)
+layout_mode = 2
+theme_override_styles/background = SubResource("Style_dash_back")
+theme_override_styles/fill = SubResource("Style_dash_fill")
+value = 100.0
+show_percentage = false
+
+[node name="Crosshair" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("2_crosshair")

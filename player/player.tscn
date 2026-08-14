@@ -1,0 +1,123 @@
+[gd_scene load_steps=13 format=3]
+
+[ext_resource type="Script" path="res://player/player.gd" id="1_player"]
+[ext_resource type="Script" path="res://weapons/automatic_weapon.gd" id="2_weapon"]
+[ext_resource type="Resource" path="res://data/starter_smg.tres" id="3_data"]
+[ext_resource type="Shader" path="res://effects/aim_ring.gdshader" id="4_aim_shader"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape_player"]
+radius = 0.34
+height = 1.3
+
+[sub_resource type="StandardMaterial3D" id="Mat_suit"]
+albedo_color = Color(0.025, 0.035, 0.07, 1)
+metallic = 0.72
+roughness = 0.24
+
+[sub_resource type="StandardMaterial3D" id="Mat_skin"]
+albedo_color = Color(0.73, 0.45, 0.32, 1)
+roughness = 0.58
+
+[sub_resource type="StandardMaterial3D" id="Mat_cyan"]
+albedo_color = Color(0.05, 0.52, 0.62, 1)
+metallic = 0.35
+roughness = 0.18
+emission_enabled = true
+emission = Color(0.12, 0.92, 1, 1)
+emission_energy_multiplier = 4.2
+
+[sub_resource type="CapsuleMesh" id="Mesh_body"]
+material = SubResource("Mat_suit")
+radius = 0.27
+height = 0.92
+radial_segments = 12
+rings = 4
+
+[sub_resource type="SphereMesh" id="Mesh_head"]
+material = SubResource("Mat_skin")
+radius = 0.205
+height = 0.41
+radial_segments = 12
+rings = 6
+
+[sub_resource type="BoxMesh" id="Mesh_strip"]
+material = SubResource("Mat_cyan")
+size = Vector3(0.08, 0.5, 0.035)
+
+[sub_resource type="BoxMesh" id="Mesh_gun"]
+material = SubResource("Mat_suit")
+size = Vector3(0.16, 0.14, 0.88)
+
+[sub_resource type="BoxMesh" id="Mesh_gun_glow"]
+material = SubResource("Mat_cyan")
+size = Vector3(0.19, 0.045, 0.42)
+
+[sub_resource type="ShaderMaterial" id="Mat_aim"]
+shader = ExtResource("4_aim_shader")
+shader_parameter/ring_color = Color(0.38, 0.97, 1, 1)
+shader_parameter/alpha = 0.72
+shader_parameter/pulse_speed = 3.0
+
+[sub_resource type="QuadMesh" id="Mesh_aim"]
+material = SubResource("Mat_aim")
+size = Vector2(0.62, 0.62)
+
+[node name="Player" type="CharacterBody3D" groups=["player"]]
+collision_layer = 4
+collision_mask = 1
+script = ExtResource("1_player")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("CapsuleShape_player")
+
+[node name="Visual" type="Node3D" parent="."]
+unique_name_in_owner = true
+
+[node name="Body" type="MeshInstance3D" parent="Visual"]
+mesh = SubResource("Mesh_body")
+position = Vector3(0, 0, 0)
+cast_shadow = 1
+
+[node name="Head" type="MeshInstance3D" parent="Visual"]
+mesh = SubResource("Mesh_head")
+position = Vector3(0, 0.6, -0.03)
+cast_shadow = 1
+
+[node name="BackGlow" type="MeshInstance3D" parent="Visual"]
+mesh = SubResource("Mesh_strip")
+position = Vector3(0, 0.02, 0.273)
+
+[node name="AutomaticWeapon" type="Node3D" parent="."]
+unique_name_in_owner = true
+position = Vector3(0.31, 0.12, -0.22)
+script = ExtResource("2_weapon")
+data = ExtResource("3_data")
+
+[node name="WeaponVisual" type="Node3D" parent="AutomaticWeapon"]
+unique_name_in_owner = true
+
+[node name="Gun" type="MeshInstance3D" parent="AutomaticWeapon/WeaponVisual"]
+mesh = SubResource("Mesh_gun")
+position = Vector3(0, 0, -0.34)
+cast_shadow = 1
+
+[node name="GlowRail" type="MeshInstance3D" parent="AutomaticWeapon/WeaponVisual"]
+mesh = SubResource("Mesh_gun_glow")
+position = Vector3(0, 0.09, -0.35)
+
+[node name="Muzzle" type="Marker3D" parent="AutomaticWeapon"]
+unique_name_in_owner = true
+position = Vector3(0, 0.01, -0.83)
+
+[node name="AimCursor" type="MeshInstance3D" parent="."]
+unique_name_in_owner = true
+rotation_degrees = Vector3(-90, 0, 0)
+mesh = SubResource("Mesh_aim")
+cast_shadow = 0
+
+[node name="AccentLight" type="OmniLight3D" parent="."]
+position = Vector3(0, 0.65, 0)
+light_color = Color(0.2, 0.88, 1, 1)
+light_energy = 1.3
+omni_range = 2.7
+shadow_enabled = false
