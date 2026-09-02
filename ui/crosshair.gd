@@ -13,20 +13,20 @@ func _process(delta: float) -> void:
 
 func _draw() -> void:
 	var center := get_viewport().get_mouse_position()
-	var cyan := Color(0.55, 0.98, 1.0, 0.92)
-	var shadow := Color(0.0, 0.02, 0.05, 0.8)
+	var reticle_color := Color(0.93, 0.9, 0.82, 0.96)
+	var shadow := Color(0.08, 0.11, 0.12, 0.82)
 	var gap := 8.0 + _kick * 7.0
 	var line_length := 6.0
-	draw_circle(center, 2.1 + _kick * 0.9, cyan)
-	draw_arc(center, 9.0 + _kick * 4.0, -0.75, 0.75, 16, cyan, 1.35, true)
-	draw_arc(center, 9.0 + _kick * 4.0, PI - 0.75, PI + 0.75, 16, cyan, 1.35, true)
+	draw_circle(center, 2.1 + _kick * 0.9, reticle_color)
+	draw_arc(center, 9.0 + _kick * 4.0, -0.75, 0.75, 16, reticle_color, 1.35, true)
+	draw_arc(center, 9.0 + _kick * 4.0, PI - 0.75, PI + 0.75, 16, reticle_color, 1.35, true)
 	for direction_value in [Vector2.LEFT, Vector2.RIGHT, Vector2.UP, Vector2.DOWN]:
 		var direction := direction_value as Vector2
 		var perpendicular := Vector2(-direction.y, direction.x)
 		var start: Vector2 = center + direction * gap
 		var finish: Vector2 = center + direction * (gap + line_length)
 		draw_line(start + perpendicular, finish + perpendicular, shadow, 3.5, true)
-		draw_line(start, finish, cyan, 1.4, true)
+		draw_line(start, finish, reticle_color, 1.8, true)
 
 func _connect_weapon() -> void:
 	var player := get_tree().get_first_node_in_group("player") as PlayerController

@@ -4,7 +4,7 @@ extends StaticBody3D
 signal died(target: DamageableTarget)
 
 @export var max_health := 72.0
-@export var accent_color := Color("ff3b91")
+@export var accent_color := Color("c56449")
 
 @onready var visual: Node3D = %Visual
 @onready var collision_shape: CollisionShape3D = %CollisionShape3D
@@ -68,7 +68,7 @@ func _flash() -> void:
 		var material: StandardMaterial3D = entry.material
 		material.albedo_color = Color.WHITE
 		material.emission = Color.WHITE
-		material.emission_energy_multiplier = 9.0
+		material.emission_energy_multiplier = 2.4
 		_flash_tween.tween_property(material, "albedo_color", entry.albedo, 0.12)
 		_flash_tween.tween_property(material, "emission", entry.emission, 0.14)
 		_flash_tween.tween_property(material, "emission_energy_multiplier", entry.energy, 0.15)
@@ -91,4 +91,3 @@ func _update_health_bar() -> void:
 	var ratio := clampf(health / max_health, 0.0, 1.0)
 	hp_fill.scale.x = ratio
 	hp_fill.position.x = (ratio - 1.0) * 0.31
-

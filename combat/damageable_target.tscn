@@ -7,25 +7,25 @@ radius = 0.48
 height = 1.5
 
 [sub_resource type="StandardMaterial3D" id="Mat_target"]
-albedo_color = Color(0.12, 0.015, 0.07, 1)
-metallic = 0.76
-roughness = 0.24
+albedo_color = Color(0.46, 0.16, 0.12, 1)
+metallic = 0.08
+roughness = 0.58
 emission_enabled = true
-emission = Color(0.45, 0.015, 0.16, 1)
-emission_energy_multiplier = 1.7
+emission = Color(0.46, 0.16, 0.12, 1)
+emission_energy_multiplier = 0.0
 
 [sub_resource type="StandardMaterial3D" id="Mat_accent"]
-albedo_color = Color(0.72, 0.035, 0.32, 1)
-metallic = 0.35
-roughness = 0.16
+albedo_color = Color(0.77, 0.53, 0.22, 1)
+metallic = 0.12
+roughness = 0.48
 emission_enabled = true
-emission = Color(1, 0.03, 0.38, 1)
-emission_energy_multiplier = 5.0
+emission = Color(0.77, 0.53, 0.22, 1)
+emission_energy_multiplier = 0.0
 
 [sub_resource type="StandardMaterial3D" id="Mat_dark"]
-albedo_color = Color(0.008, 0.012, 0.035, 1)
-metallic = 0.85
-roughness = 0.2
+albedo_color = Color(0.1, 0.12, 0.12, 1)
+metallic = 0.24
+roughness = 0.62
 
 [sub_resource type="CylinderMesh" id="Mesh_body"]
 material = SubResource("Mat_target")

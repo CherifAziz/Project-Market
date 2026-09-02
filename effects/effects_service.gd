@@ -20,15 +20,15 @@ func spawn_muzzle_flash(position: Vector3, direction: Vector3, color: Color) -> 
 	mesh.height = 0.24
 	mesh.radial_segments = 8
 	mesh.rings = 4
-	mesh.material = _emissive_material(color, 8.0)
+	mesh.material = _emissive_material(color, 5.0)
 	flash.mesh = mesh
 	flash.scale = Vector3(0.75, 0.75, 2.3)
 	root.add_child(flash)
 
 	var light := OmniLight3D.new()
 	light.light_color = color
-	light.light_energy = 5.5
-	light.omni_range = 3.2
+	light.light_energy = 2.4
+	light.omni_range = 2.5
 	light.shadow_enabled = false
 	root.add_child(light)
 
@@ -44,7 +44,7 @@ func spawn_tracer(from: Vector3, to: Vector3, color: Color, width: float, durati
 	var tracer := MeshInstance3D.new()
 	var mesh := BoxMesh.new()
 	mesh.size = Vector3(width, width, distance)
-	mesh.material = _emissive_material(color, 7.0, true)
+	mesh.material = _emissive_material(color, 4.5, true)
 	tracer.mesh = mesh
 	add_child(tracer)
 	tracer.global_position = from.lerp(to, 0.5)
@@ -82,7 +82,7 @@ func spawn_impact(position: Vector3, normal: Vector3, color: Color, strength := 
 	spark_mesh.height = 0.13
 	spark_mesh.radial_segments = 5
 	spark_mesh.rings = 2
-	spark_mesh.material = _emissive_material(color, 5.0)
+	spark_mesh.material = _emissive_material(color, 3.2)
 	particles.draw_pass_1 = spark_mesh
 	add_child(particles)
 	particles.global_position = position + normal * 0.035
@@ -95,7 +95,7 @@ func spawn_impact(position: Vector3, normal: Vector3, color: Color, strength := 
 	flash_mesh.height = 0.22 * strength
 	flash_mesh.radial_segments = 6
 	flash_mesh.rings = 3
-	flash_mesh.material = _emissive_material(color, 7.0, true)
+	flash_mesh.material = _emissive_material(color, 4.2, true)
 	flash.mesh = flash_mesh
 	add_child(flash)
 	flash.global_position = position
@@ -109,8 +109,8 @@ func spawn_damage_number(position: Vector3, amount: float, critical := false) ->
 	label.text = str(int(round(amount)))
 	label.font_size = 54 if critical else 44
 	label.pixel_size = 0.006
-	label.modulate = Color("fff1ad") if critical else Color("d8fdff")
-	label.outline_modulate = Color(0.01, 0.015, 0.04, 0.95)
+	label.modulate = Color("ffd27a") if critical else Color("f5efe3")
+	label.outline_modulate = Color(0.08, 0.1, 0.1, 0.92)
 	label.outline_size = 10
 	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	label.no_depth_test = true
@@ -123,13 +123,13 @@ func spawn_damage_number(position: Vector3, amount: float, critical := false) ->
 	tween.tween_property(label, "scale", Vector3.ONE * 1.18, 0.13).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	tween.finished.connect(label.queue_free)
 
-func spawn_kill_burst(position: Vector3, color := Color("ff3f9b")) -> void:
+func spawn_kill_burst(position: Vector3, color := Color("cf6848")) -> void:
 	spawn_impact(position + Vector3.UP * 0.65, Vector3.UP, color, 2.2)
 	_spawn_ring(position + Vector3.UP * 0.045, color, 0.55, 2.4, 0.28)
 	add_camera_shake(0.48)
 
 func spawn_dash(position: Vector3, direction: Vector3) -> void:
-	var color := Color("45edff")
+	var color := Color("c7b58d")
 	_spawn_ring(position + Vector3.UP * 0.045, color, 0.45, 1.65, 0.22)
 
 	for side_value in [-1.0, 1.0]:
@@ -137,7 +137,7 @@ func spawn_dash(position: Vector3, direction: Vector3) -> void:
 		var streak := MeshInstance3D.new()
 		var mesh := BoxMesh.new()
 		mesh.size = Vector3(0.055, 0.035, 1.65)
-		mesh.material = _emissive_material(color, 5.5, true)
+		mesh.material = _emissive_material(color, 3.4, true)
 		streak.mesh = mesh
 		add_child(streak)
 		var lateral: Vector3 = direction.cross(Vector3.UP).normalized() * 0.3 * side
@@ -169,6 +169,7 @@ func _spawn_ring(position: Vector3, color: Color, start_scale: float, end_scale:
 	material.set_shader_parameter("ring_color", color)
 	material.set_shader_parameter("alpha", 0.9)
 	material.set_shader_parameter("pulse_speed", 0.0)
+	material.set_shader_parameter("intensity", 1.15)
 	var mesh := QuadMesh.new()
 	mesh.size = Vector2(1.35, 1.35)
 	mesh.material = material
@@ -186,8 +187,8 @@ func _spawn_ring(position: Vector3, color: Color, start_scale: float, end_scale:
 func _emissive_material(color: Color, energy: float, transparent := false) -> StandardMaterial3D:
 	var material := StandardMaterial3D.new()
 	material.albedo_color = color
-	material.metallic = 0.15
-	material.roughness = 0.18
+	material.metallic = 0.0
+	material.roughness = 0.42
 	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	material.emission_enabled = true
 	material.emission = color

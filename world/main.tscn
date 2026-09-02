@@ -12,18 +12,18 @@ script = ExtResource("1_main")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 
-[node name="MoonKey" type="DirectionalLight3D" parent="."]
-rotation_degrees = Vector3(-51, -31, 0)
-light_color = Color(0.38, 0.54, 1, 1)
-light_energy = 1.25
+[node name="GoldenSun" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-34, -124, 0)
+light_color = Color(1, 0.78, 0.56, 1)
+light_energy = 1.08
 shadow_enabled = true
 directional_shadow_max_distance = 44.0
-directional_shadow_fade_start = 0.8
+directional_shadow_fade_start = 0.86
 
-[node name="MagentaRim" type="DirectionalLight3D" parent="."]
-rotation_degrees = Vector3(-38, 142, 14)
-light_color = Color(1, 0.08, 0.36, 1)
-light_energy = 0.48
+[node name="SkyFill" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-58, 42, 0)
+light_color = Color(0.59, 0.69, 0.72, 1)
+light_energy = 0.2
 shadow_enabled = false
 
 [node name="ArenaBuilder" type="Node3D" parent="."]
