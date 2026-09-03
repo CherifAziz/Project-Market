@@ -2,6 +2,13 @@ class_name PlayerController
 extends CharacterBody3D
 
 signal dash_state_changed(ready_ratio: float)
+signal health_changed(current_health: float, max_health: float)
+signal damaged(amount: float, current_health: float)
+signal died
+
+@export_group("Health")
+@export var max_health := 100.0
+@export_range(0.0, 1.0, 0.01) var hurt_invulnerability := 0.28
 
 @export_group("Movement")
 @export var move_speed := 7.6
@@ -17,6 +24,7 @@ signal dash_state_changed(ready_ratio: float)
 @onready var weapon: AutomaticWeapon = %AutomaticWeapon
 @onready var aim_cursor: MeshInstance3D = %AimCursor
 
+var health := 0.0
 var aim_direction := Vector3.FORWARD
 var _aim_point := Vector3.ZERO
 var _dash_direction := Vector3.FORWARD
@@ -25,10 +33,18 @@ var _dash_cooldown_left := 0.0
 var _visual_time := 0.0
 var _dash_tween: Tween
 var _gameplay_input_enabled := true
+var _hurt_invulnerability_left := 0.0
+var _dead := false
+var _damage_tween: Tween
+var _death_tween: Tween
+var _flash_materials: Array[Dictionary] = []
 
 func _ready() -> void:
 	add_to_group("player")
+	health = max_health
 	aim_cursor.top_level = true
+	_prepare_flash_materials()
+	health_changed.emit(health, max_health)
 
 func _physics_process(delta: float) -> void:
 	if not _gameplay_input_enabled:
@@ -41,7 +57,8 @@ func _physics_process(delta: float) -> void:
 			velocity.y = -0.5
 		move_and_slide()
 		weapon.tick(delta, false)
-		_update_visual(delta, Vector3.ZERO)
+		if not _dead:
+			_update_visual(delta, Vector3.ZERO)
 		dash_state_changed.emit(get_dash_ready_ratio())
 		return
 
@@ -90,11 +107,13 @@ func _update_aim() -> void:
 	if flat_direction.length_squared() > 0.04:
 		aim_direction = flat_direction.normalized()
 		rotation.y = atan2(-aim_direction.x, -aim_direction.z)
+	weapon.set_aim_point(_aim_point)
 	aim_cursor.global_position = _aim_point + Vector3.UP * 0.015
 
 func _update_dash_timers(delta: float) -> void:
 	_dash_time_left = maxf(_dash_time_left - delta, 0.0)
 	_dash_cooldown_left = maxf(_dash_cooldown_left - delta, 0.0)
+	_hurt_invulnerability_left = maxf(_hurt_invulnerability_left - delta, 0.0)
 
 func _start_dash(move_direction: Vector3) -> void:
 	_dash_direction = move_direction if move_direction != Vector3.ZERO else aim_direction
@@ -123,10 +142,91 @@ func get_dash_ready_ratio() -> float:
 	return 1.0 - clampf(_dash_cooldown_left / dash_cooldown, 0.0, 1.0)
 
 func set_gameplay_input_enabled(enabled: bool) -> void:
-	_gameplay_input_enabled = enabled
+	_gameplay_input_enabled = enabled and not _dead
 	if not enabled:
 		velocity.x = 0.0
 		velocity.z = 0.0
 
 func is_gameplay_input_enabled() -> bool:
 	return _gameplay_input_enabled
+
+func take_damage(amount: float, hit_position := Vector3.ZERO, _hit_normal := Vector3.UP, shot_direction := Vector3.ZERO) -> bool:
+	if _dead or amount <= 0.0 or _hurt_invulnerability_left > 0.0 or is_dashing():
+		return false
+	health = maxf(health - amount, 0.0)
+	_hurt_invulnerability_left = hurt_invulnerability
+	_flash_damage()
+	health_changed.emit(health, max_health)
+	damaged.emit(amount, health)
+
+	var effects := get_tree().get_first_node_in_group("effects")
+	if effects != null:
+		if effects.has_method("spawn_player_hit"):
+			effects.spawn_player_hit(hit_position if hit_position != Vector3.ZERO else global_position + Vector3.UP * 0.6, shot_direction)
+		else:
+			effects.add_camera_shake(0.45)
+	var audio := get_tree().get_first_node_in_group("audio_service")
+	if audio != null and audio.has_method("play_world"):
+		audio.play_world(&"player_hit", global_position + Vector3.UP * 0.6, 0.025)
+
+	if health <= 0.0:
+		_die()
+	return true
+
+func is_dashing() -> bool:
+	return _dash_time_left > 0.0
+
+func is_alive() -> bool:
+	return not _dead
+
+func get_health_ratio() -> float:
+	return clampf(health / maxf(max_health, 0.001), 0.0, 1.0)
+
+func _die() -> void:
+	if _dead:
+		return
+	_dead = true
+	_gameplay_input_enabled = false
+	velocity = Vector3.ZERO
+	aim_cursor.visible = false
+	weapon.tick(0.0, false)
+	died.emit()
+
+	var effects := get_tree().get_first_node_in_group("effects")
+	if effects != null:
+		if effects.has_method("spawn_player_down"):
+			effects.spawn_player_down(global_position)
+		effects.hitstop(0.07, 0.08)
+	var fall_direction := -1.0 if aim_direction.x >= 0.0 else 1.0
+	_death_tween = create_tween().set_parallel(true).set_ignore_time_scale(true)
+	_death_tween.tween_property(visual, "rotation:z", deg_to_rad(78.0) * fall_direction, 0.42).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
+	_death_tween.tween_property(visual, "position:y", -0.34, 0.38).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	_death_tween.tween_property(visual, "scale", Vector3(1.08, 0.82, 1.08), 0.4)
+
+func _flash_damage() -> void:
+	if _damage_tween != null and _damage_tween.is_valid():
+		_damage_tween.kill()
+	_damage_tween = create_tween().set_parallel(true).set_ignore_time_scale(true)
+	for entry in _flash_materials:
+		var material: StandardMaterial3D = entry["material"]
+		material.albedo_color = Color("f4b3a0")
+		material.emission = Color("d96f5b")
+		material.emission_energy_multiplier = 1.4
+		_damage_tween.tween_property(material, "albedo_color", entry["albedo"], 0.2)
+		_damage_tween.tween_property(material, "emission", entry["emission"], 0.22)
+		_damage_tween.tween_property(material, "emission_energy_multiplier", entry["energy"], 0.22)
+
+func _prepare_flash_materials() -> void:
+	for child in visual.find_children("*", "MeshInstance3D", true, false):
+		var mesh_instance := child as MeshInstance3D
+		var active := mesh_instance.get_active_material(0)
+		if active is StandardMaterial3D:
+			var material := active.duplicate() as StandardMaterial3D
+			material.emission_enabled = true
+			mesh_instance.material_override = material
+			_flash_materials.append({
+				"material": material,
+				"albedo": material.albedo_color,
+				"emission": material.emission,
+				"energy": material.emission_energy_multiplier,
+			})

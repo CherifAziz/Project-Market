@@ -9,32 +9,63 @@ extends CanvasLayer
 @onready var equipment_status_label: Label = %EquipmentStatus
 @onready var equipment_health_bar: ProgressBar = %EquipmentHealthBar
 @onready var equipment_integrity_label: Label = %EquipmentIntegrity
+@onready var player_health_bar: ProgressBar = %PlayerHealthBar
+@onready var player_health_label: Label = %PlayerHealthLabel
+@onready var damage_flash: ColorRect = %DamageFlash
+@onready var security_alert_panel: PanelContainer = %SecurityAlertPanel
+@onready var security_alert_label: Label = %SecurityAlertLabel
+@onready var death_overlay: Control = %DeathOverlay
+@onready var crosshair: Control = $Crosshair
 
 var _player: PlayerController
+var _security_director: SecurityDirector
 var _initial_target_count := 0
 var _focused_equipment: DestructibleEquipment
+var _damage_flash_tween: Tween
+var _security_alert_tween: Tween
 
 const EQUIPMENT_PROXIMITY := 3.2
 
 func _ready() -> void:
 	_player = get_tree().get_first_node_in_group("player") as PlayerController
 	_initial_target_count = get_tree().get_nodes_in_group("targets").size()
+	call_deferred("_bind_runtime_signals")
+
+func _bind_runtime_signals() -> void:
+	if is_instance_valid(_player):
+		if not _player.health_changed.is_connected(_on_player_health_changed):
+			_player.health_changed.connect(_on_player_health_changed)
+		if not _player.damaged.is_connected(_on_player_damaged):
+			_player.damaged.connect(_on_player_damaged)
+		if not _player.died.is_connected(_on_player_died):
+			_player.died.connect(_on_player_died)
+		_on_player_health_changed(_player.health, _player.max_health)
+	_security_director = get_tree().get_first_node_in_group("security_director") as SecurityDirector
+	if is_instance_valid(_security_director):
+		if not _security_director.security_alert.is_connected(_on_security_alert):
+			_security_director.security_alert.connect(_on_security_alert)
+		if not _security_director.security_count_changed.is_connected(_on_security_count_changed):
+			_security_director.security_count_changed.connect(_on_security_count_changed)
+		_initial_target_count = maxi(_initial_target_count, _security_director.get_initial_count())
 
 func _process(delta: float) -> void:
 	if not is_instance_valid(_player):
 		_player = get_tree().get_first_node_in_group("player") as PlayerController
+		_bind_runtime_signals()
 	if _player:
 		var dash_ratio := _player.get_dash_ready_ratio()
 		dash_bar.value = dash_ratio * 100.0
 		dash_label.text = "DASH  READY" if dash_ratio >= 0.999 else "DASH  %02d" % int(dash_ratio * 100.0)
 
 	var remaining := get_tree().get_nodes_in_group("targets").size()
+	if _initial_target_count == 0 and remaining > 0:
+		_initial_target_count = remaining
 	target_label.text = "%02d" % remaining
 	if _initial_target_count > 0 and remaining == 0:
-		sector_label.text = "SECTOR LIQUIDATED  //  R TO RESET"
-		sector_label.modulate = Color("75fbff")
+		sector_label.text = "SECURITY NEUTRALIZED  //  R TO RESET"
+		sector_label.modulate = Color("9fc49f")
 	else:
-		sector_label.text = "HOSTILE ASSETS"
+		sector_label.text = "SECURITY PRESENCE"
 
 	_update_equipment_context(delta)
 
@@ -108,3 +139,48 @@ func _equipment_under_cursor() -> DestructibleEquipment:
 	if result.is_empty():
 		return null
 	return result.collider as DestructibleEquipment
+
+func _on_player_health_changed(current_health: float, max_health: float) -> void:
+	var ratio := clampf(current_health / maxf(max_health, 0.001), 0.0, 1.0)
+	player_health_bar.value = ratio * 100.0
+	player_health_label.text = "HEALTH  %03d" % int(round(current_health))
+	var fill_style := player_health_bar.get_theme_stylebox("fill") as StyleBoxFlat
+	if fill_style != null:
+		fill_style.bg_color = Color("b96654") if ratio < 0.34 else Color("789b7f")
+
+func _on_player_damaged(_amount: float, _current_health: float) -> void:
+	if _damage_flash_tween != null and _damage_flash_tween.is_valid():
+		_damage_flash_tween.kill()
+	damage_flash.visible = true
+	damage_flash.color.a = 0.24
+	_damage_flash_tween = create_tween().set_ignore_time_scale(true)
+	_damage_flash_tween.tween_property(damage_flash, "color:a", 0.0, 0.32).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+
+func _on_player_died() -> void:
+	death_overlay.visible = true
+	crosshair.visible = false
+	equipment_context.visible = false
+	dash_label.text = "DASH  UNAVAILABLE"
+
+func _on_security_alert(_company_id: String, message: String, accent_color: Color, pressure_stage: int) -> void:
+	if _security_alert_tween != null and _security_alert_tween.is_valid():
+		_security_alert_tween.kill()
+	security_alert_label.text = "%s  //  LEVEL %02d" % [message, maxi(pressure_stage, 1)]
+	security_alert_label.add_theme_color_override("font_color", accent_color.lightened(0.36))
+	var style := security_alert_panel.get_theme_stylebox("panel").duplicate() as StyleBoxFlat
+	style.border_color = Color(accent_color, 0.9)
+	security_alert_panel.add_theme_stylebox_override("panel", style)
+	security_alert_panel.visible = true
+	security_alert_panel.modulate.a = 0.0
+	security_alert_panel.position.y = -7.0
+	_security_alert_tween = create_tween().set_ignore_time_scale(true)
+	_security_alert_tween.set_parallel(true)
+	_security_alert_tween.tween_property(security_alert_panel, "modulate:a", 1.0, 0.13)
+	_security_alert_tween.tween_property(security_alert_panel, "position:y", 0.0, 0.2).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	_security_alert_tween.set_parallel(false)
+	_security_alert_tween.tween_interval(1.25)
+	_security_alert_tween.tween_property(security_alert_panel, "modulate:a", 0.0, 0.32)
+	_security_alert_tween.finished.connect(func() -> void: security_alert_panel.visible = false)
+
+func _on_security_count_changed(_alive_count: int, initial_count: int) -> void:
+	_initial_target_count = maxi(_initial_target_count, initial_count)

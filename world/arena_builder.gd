@@ -1,7 +1,6 @@
 class_name ArenaBuilder
 extends Node3D
 
-const TARGET_SCENE := preload("res://combat/damageable_target.tscn")
 const FLOOR_SHADER := preload("res://world/stylized_floor.gdshader")
 
 var _asphalt: StandardMaterial3D
@@ -38,7 +37,6 @@ func _ready() -> void:
 	_build_ground_and_streets()
 	_build_city_shell()
 	_build_urban_details()
-	_spawn_targets()
 
 func _build_ground_and_streets() -> void:
 	var floor_material := ShaderMaterial.new()
@@ -111,6 +109,7 @@ func _build_city_shell() -> void:
 func _add_building(base_position: Vector3, size: Vector3, facade: Material, accent: Material) -> void:
 	var center := base_position + Vector3.UP * size.y * 0.5
 	var body := _create_solid("Building", center, size, facade)
+	body.add_to_group("camera_occluder")
 	var side_facing_x := absf(base_position.x) > absf(base_position.z)
 	var inward_sign := -signf(base_position.x if side_facing_x else base_position.z)
 
@@ -227,20 +226,6 @@ func _add_steps(base_position: Vector3, direction: Vector3) -> void:
 		if absf(direction.x) > 0.5:
 			step_size = Vector3(depth, 0.11 + float(index) * 0.11, 1.8)
 		_create_decor_box(step_position, step_size, _warm_stone)
-
-func _spawn_targets() -> void:
-	# Positions are deliberately unchanged from the approved combat playground.
-	var target_positions := [
-		Vector3(-8.5, 0, -7.5), Vector3(-3.5, 0, -8.8), Vector3(2.5, 0, -8.0), Vector3(8.7, 0, -7.0),
-		Vector3(-9.5, 0, -1.4), Vector3(8.7, 0, 0.0), Vector3(-7.2, 0, 5.5), Vector3(-2.2, 0, 7.5),
-		Vector3(3.2, 0, 7.2), Vector3(9.2, 0, 7.8), Vector3(1.0, 0, 1.5),
-	]
-	for index in range(target_positions.size()):
-		var target := TARGET_SCENE.instantiate() as DamageableTarget
-		target.position = target_positions[index]
-		target.rotation.y = index * 0.57
-		target.accent_color = Color("c56449") if index % 2 == 0 else Color("6e8587")
-		add_child(target)
 
 func _create_solid(node_name: String, position: Vector3, size: Vector3, material: Material) -> StaticBody3D:
 	var body := StaticBody3D.new()

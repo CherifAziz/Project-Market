@@ -156,6 +156,37 @@ func spawn_dash(position: Vector3, direction: Vector3) -> void:
 		tween.tween_property(streak, "scale:z", 0.25, 0.2)
 		tween.finished.connect(streak.queue_free)
 
+func spawn_enemy_telegraph(from: Vector3, to: Vector3, color: Color, duration: float) -> void:
+	var distance := from.distance_to(to)
+	if distance < 0.05:
+		return
+	var line := MeshInstance3D.new()
+	var mesh := BoxMesh.new()
+	mesh.size = Vector3(0.024, 0.024, distance)
+	mesh.material = _emissive_material(color, 2.8, true)
+	line.mesh = mesh
+	line.transparency = 0.5
+	line.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(line)
+	line.global_position = from.lerp(to, 0.5)
+	line.look_at(to, Vector3.UP)
+	_spawn_ring(Vector3(to.x, 0.05, to.z), color, 0.24, 0.62, duration)
+
+	var tween := create_tween().set_parallel(true).set_ignore_time_scale(true)
+	tween.tween_property(line, "transparency", 0.05, duration).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	tween.tween_property(line, "scale", Vector3(1.75, 1.75, 1.0), duration).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	tween.finished.connect(line.queue_free)
+
+func spawn_player_hit(position: Vector3, shot_direction: Vector3) -> void:
+	var normal := -shot_direction.normalized() if shot_direction.length_squared() > 0.01 else Vector3.UP
+	spawn_impact(position, normal, Color("d97860"), 0.85)
+	add_camera_shake(0.5)
+
+func spawn_player_down(position: Vector3) -> void:
+	_spawn_ring(position + Vector3.UP * 0.05, Color("b85e4c"), 0.5, 2.2, 0.5)
+	spawn_impact(position + Vector3.UP * 0.55, Vector3.UP, Color("c66b55"), 1.25)
+	add_camera_shake(0.72)
+
 func add_camera_shake(amount: float) -> void:
 	var rig := get_tree().get_first_node_in_group("camera_rig")
 	if rig and rig.has_method("add_shake"):

@@ -2,6 +2,7 @@ class_name CompanyFacility
 extends Node3D
 
 signal equipment_destroyed(company_id: String, equipment_id: String, destroyed_count: int, total_count: int)
+signal equipment_attacked(company_id: String, equipment_id: String, world_position: Vector3)
 
 enum FacilityType {
 	MEDICAL,
@@ -44,7 +45,19 @@ func _spawn_equipment() -> void:
 		equipment.position = spec["position"]
 		add_child(equipment)
 		_equipment.append(equipment)
+		equipment.attacked.connect(_on_equipment_attacked)
 		equipment.destroyed.connect(_on_equipment_destroyed)
+
+func get_security_spawn_specs() -> Array[Dictionary]:
+	if facility_type == FacilityType.ENERGY:
+		return [
+			{"position": Vector3(-2.3, 0.0, 2.35), "patrol_axis": Vector3(1.15, 0.0, 0.25)},
+			{"position": Vector3(2.35, 0.0, 2.25), "patrol_axis": Vector3(-0.2, 0.0, 1.15)},
+		]
+	return [
+		{"position": Vector3(-2.0, 0.0, 2.25), "patrol_axis": Vector3(1.25, 0.0, 0.15)},
+		{"position": Vector3(3.85, 0.0, 2.2), "patrol_axis": Vector3(-0.25, 0.0, 1.1)},
+	]
 
 func _equipment_specs() -> Array[Dictionary]:
 	if facility_type == FacilityType.ENERGY:
@@ -92,6 +105,9 @@ func _equipment_specs() -> Array[Dictionary]:
 func _on_equipment_destroyed(equipment_id: String, _equipment_node: DestructibleEquipment) -> void:
 	destroyed_count += 1
 	equipment_destroyed.emit(company.company_id, equipment_id, destroyed_count, _equipment.size())
+
+func _on_equipment_attacked(equipment_id: String, _equipment_node: DestructibleEquipment, hit_position: Vector3) -> void:
+	equipment_attacked.emit(company.company_id, equipment_id, hit_position)
 
 func _build_medical_shell() -> void:
 	var stone := _make_material(Color("b7ad9c"), 0.0, 0.82)

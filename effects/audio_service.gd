@@ -9,6 +9,9 @@ const CUE_MARKET_CONFIRM := &"market_confirm"
 const CUE_MARKET_DROP := &"market_drop"
 const CUE_PROFIT_TICK := &"profit_tick"
 const CUE_PROFIT_FINAL := &"profit_final"
+const CUE_SECURITY_SHOT := &"security_shot"
+const CUE_SECURITY_ALERT := &"security_alert"
+const CUE_PLAYER_HIT := &"player_hit"
 
 const MIX_RATE := 22050
 const WORLD_POOL_SIZE := 14
@@ -76,6 +79,9 @@ func _build_cues() -> void:
 	_add_cue(CUE_MARKET_DROP, 0.38, -11.0)
 	_add_cue(CUE_PROFIT_TICK, 0.3, -12.0)
 	_add_cue(CUE_PROFIT_FINAL, 0.72, -8.5)
+	_add_cue(CUE_SECURITY_SHOT, 0.11, -10.5)
+	_add_cue(CUE_SECURITY_ALERT, 0.52, -9.0)
+	_add_cue(CUE_PLAYER_HIT, 0.2, -9.5)
 
 func _add_cue(cue: StringName, duration: float, volume_db: float) -> void:
 	_streams[cue] = _synthesize(cue, duration)
@@ -136,6 +142,17 @@ func _sample_cue(cue: StringName, time: float, duration: float) -> float:
 			var note: float = notes[note_index]
 			var chord := sin(TAU * note * time) + sin(TAU * note * 1.5 * time) * 0.28
 			return chord * 0.36 * _soft_release(progress) * _attack(time, 0.008)
+		CUE_SECURITY_SHOT:
+			var security_crack := noise_sample * exp(-time * 46.0)
+			var security_body := sin(TAU * 74.0 * time) * exp(-time * 25.0)
+			return (security_crack * 0.38 + security_body * 0.76) * _attack(time, 0.002)
+		CUE_SECURITY_ALERT:
+			var alert_step := int(time * 9.0) % 2
+			var alert_frequency := 525.0 if alert_step == 0 else 690.0
+			return (sin(TAU * alert_frequency * time) * 0.38 + sin(TAU * 112.0 * time) * 0.12) * _soft_release(progress)
+		CUE_PLAYER_HIT:
+			var impact_body := sin(TAU * (78.0 - progress * 22.0) * time) * exp(-time * 13.0)
+			return (impact_body * 0.82 + noise_sample * exp(-time * 25.0) * 0.18) * _attack(time, 0.002)
 	return 0.0
 
 func _attack(time: float, attack_duration: float) -> float:

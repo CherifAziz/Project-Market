@@ -11,6 +11,8 @@ signal fired
 
 var _cooldown := 0.0
 var _recoil_tween: Tween
+var _aim_world_point := Vector3.ZERO
+var _has_aim_point := false
 
 func tick(delta: float, wants_to_fire: bool) -> void:
 	_cooldown = maxf(_cooldown - delta, 0.0)
@@ -18,14 +20,23 @@ func tick(delta: float, wants_to_fire: bool) -> void:
 		_fire()
 		_cooldown += data.shot_interval() if data else 0.1
 
+func set_aim_point(world_point: Vector3) -> void:
+	_aim_world_point = world_point
+	_has_aim_point = true
+
 func _fire() -> void:
 	if data == null or not is_inside_tree():
 		return
 
+	var origin := muzzle.global_position
 	var direction := -global_transform.basis.z.normalized()
+	if _has_aim_point:
+		var converged_direction := _aim_world_point - origin
+		converged_direction.y = 0.0
+		if converged_direction.length_squared() > 0.01:
+			direction = converged_direction.normalized()
 	var spread := deg_to_rad(data.spread_degrees)
 	direction = direction.rotated(Vector3.UP, randf_range(-spread, spread)).normalized()
-	var origin := muzzle.global_position
 	var endpoint := origin + direction * data.range
 	var hit_position := endpoint
 	var hit_normal := Vector3.UP

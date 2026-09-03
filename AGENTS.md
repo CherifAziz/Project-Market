@@ -15,14 +15,15 @@
 
 ## Existing architecture
 
-- `player/`: movement, mouse aim, dash, and follow camera.
-- `combat/`: damageable combat targets and health/destruction behavior.
+- `player/`: movement, mouse aim, dash/evasion, health, death/restart state, and follow camera.
+- `combat/`: company security agents, their lightweight patrol/LOS/ranged-combat state machine, and health/destruction behavior.
 - `weapons/` + `data/`: weapon behavior and data-driven resources.
 - `effects/`: shared combat, destruction, and lightweight procedural audio feedback.
-- `world/`: main scene, procedural arena, company facilities, and physical equipment. World objects report facts through signals; they do not change stock prices directly.
+- `world/`: main scene, procedural arena, company facilities, physical equipment, and `SecurityDirector` for local company alerts. World objects report facts through signals; they do not change stock prices directly.
 - `economy/`: one multi-company `MarketService` is the economic source of truth; `MarketDependency` data describes explicit cross-company reactions, and `ShortPosition` owns the pure P&L calculation.
 - `ui/`: HUD and market views display state from services; UI must not calculate or own economic state.
-- Current causal boundary: `World / CompanyFacility -> Main coordinator -> Economy / MarketService -> UI`.
+- Current economic boundary: `World / CompanyFacility -> Main coordinator -> Economy / MarketService -> UI`.
+- Current security boundary: `CompanyFacility equipment attack -> SecurityDirector -> matching company agents + HUD`. Keep security local to the attacked company; it must not own or mutate market state.
 - Keep these boundaries explicit and avoid circular dependencies. In particular, combat/weapons must not know about the market, and economy must not depend on the player or rendering.
 
 ## Validation requirements
@@ -34,6 +35,7 @@
 godot --headless --path . --script res://tests/playground_smoke_test.gd
 godot --headless --path . --script res://tests/market_logic_test.gd
 godot --headless --path . --script res://tests/market_flow_test.gd
+godot --headless --path . --script res://tests/security_flow_test.gd
 ```
 
 - Also launch or render the real project in Godot 4.7.1 when the change can affect scenes, shaders, input, visuals, physics, or signals. Check for script, shader, signal, and runtime errors.

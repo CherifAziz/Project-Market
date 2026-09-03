@@ -25,18 +25,23 @@ func _run() -> void:
 	var vita_equipment := company_equipment.filter(func(machine: DestructibleEquipment) -> bool: return machine.owner_company_id == "vita_medical")
 	var arc_equipment := company_equipment.filter(func(machine: DestructibleEquipment) -> bool: return machine.owner_company_id == "arc_energy")
 	var audio := get_first_node_in_group("audio_service")
+	var security_director := get_first_node_in_group("security_director") as SecurityDirector
 	_check(player != null, "player scene is present")
-	_check(targets.size() == 11, "all eleven targets spawn")
+	_check(targets.size() == 4, "four company security agents replace the static target field")
+	_check(targets.all(func(target: Node) -> bool: return target is SecurityAgent), "all active targets are mobile security agents")
+	_check(security_director != null and security_director.get_company_agents("vita_medical").size() == 2 and security_director.get_company_agents("arc_energy").size() == 2, "VITA and ARC each own two guards")
 	_check(vita_equipment.size() == 3, "VITA adds exactly three separate critical machines")
 	_check(arc_equipment.size() == 3, "ARC adds exactly three separate grid assets")
 	_check(company_equipment.size() == 6, "the shared equipment pipeline registers both facilities")
 	_check(audio != null and audio.has_method("play_world") and audio.has_method("play_ui"), "reusable audio service is present")
 	if audio:
-		var required_cues := [&"smg", &"metal_impact", &"machine_damaged", &"machine_destroyed", &"market_confirm", &"market_drop", &"profit_tick", &"profit_final"]
+		var required_cues := [&"smg", &"metal_impact", &"machine_damaged", &"machine_destroyed", &"market_confirm", &"market_drop", &"profit_tick", &"profit_final", &"security_shot", &"security_alert", &"player_hit"]
 		_check(required_cues.all(func(cue: StringName) -> bool: return audio.has_cue(cue)), "all first-pass audio cues are generated")
 	if not company_equipment.is_empty():
 		_check(company_equipment.all(func(machine: DestructibleEquipment) -> bool: return machine.find_children("*", "Label3D", true, false).is_empty()), "all machines use contextual UI instead of permanent labels")
 	_check(main.has_node("HUD/EquipmentContext"), "HUD owns one contextual equipment identifier")
+	_check(main.has_node("HUD/PlayerStatus") and main.has_node("HUD/DeathOverlay"), "HUD exposes player health and a fast restart state")
+	_check(get_nodes_in_group("camera_occluder").size() > 0, "large buildings participate in camera occlusion fading")
 	var market := get_first_node_in_group("market_service") as MarketService
 	var market_panel := main.get_node("MarketPanel") as MarketPanel
 	var market_hud := main.get_node("MarketHUD") as MarketHUD
@@ -62,9 +67,11 @@ func _run() -> void:
 
 	player.set_physics_process(false)
 	player.velocity = Vector3.ZERO
-	var target := targets[0] as DamageableTarget
+	var target := targets[0] as SecurityAgent
+	target.set_ai_enabled(false)
 	player.global_position = target.global_position + Vector3(0, 0.7, 3.0)
 	player.look_at(Vector3(target.global_position.x, player.global_position.y, target.global_position.z), Vector3.UP)
+	player.weapon.set_aim_point(target.global_position)
 	await physics_frame
 
 	var starting_health := target.health
@@ -78,7 +85,7 @@ func _run() -> void:
 	player.weapon._fire()
 	player.weapon._fire()
 	await process_frame
-	_check(not target.is_in_group("targets"), "three shots kill and remove a target from the active set")
+	_check(not target.is_in_group("targets"), "three shots kill and remove a security agent from the active set")
 
 	await create_timer(0.1, true, false, true).timeout
 	main.queue_free()

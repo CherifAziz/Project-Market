@@ -1,4 +1,4 @@
-[gd_scene load_steps=15 format=3]
+[gd_scene load_steps=16 format=3]
 
 [ext_resource type="Script" path="res://world/main.gd" id="1_main"]
 [ext_resource type="Script" path="res://world/arena_builder.gd" id="2_arena"]
@@ -14,6 +14,7 @@
 [ext_resource type="Script" path="res://effects/audio_service.gd" id="12_audio"]
 [ext_resource type="Resource" path="res://data/arc_energy.tres" id="13_arc"]
 [ext_resource type="Resource" path="res://data/arc_powers_vita.tres" id="14_arc_vita"]
+[ext_resource type="Script" path="res://world/security_director.gd" id="15_security"]
 
 [node name="Main" type="Node3D"]
 script = ExtResource("1_main")
@@ -50,6 +51,9 @@ company = ExtResource("8_vita")
 position = Vector3(-9.55, 0, 8.8)
 company = ExtResource("13_arc")
 facility_type = 1
+
+[node name="SecurityDirector" type="Node3D" parent="."]
+script = ExtResource("15_security")
 
 [node name="Effects" type="Node3D" parent="."]
 script = ExtResource("3_effects")

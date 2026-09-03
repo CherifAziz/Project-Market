@@ -4,11 +4,13 @@ extends Node3D
 @onready var player: PlayerController = $Player
 @onready var market_service: MarketService = $MarketService
 @onready var market_panel: MarketPanel = $MarketPanel
+@onready var security_director: SecurityDirector = $SecurityDirector
 
 func _ready() -> void:
 	Engine.time_scale = 1.0
 	Input.mouse_mode = Input.MOUSE_MODE_HIDDEN
 	_setup_environment()
+	player.died.connect(_on_player_died)
 	for facility_node in get_tree().get_nodes_in_group("company_facility"):
 		var facility := facility_node as CompanyFacility
 		if facility != null:
@@ -33,12 +35,21 @@ func _on_facility_equipment_destroyed(company_id: String, equipment_id: String, 
 	market_service.register_sabotage(company_id, equipment_id)
 
 func _set_market_open(open: bool) -> void:
+	if open and not player.is_alive():
+		return
 	if open:
 		market_panel.open_market()
 	else:
 		market_panel.close_market()
 	player.set_gameplay_input_enabled(not open)
+	security_director.set_security_enabled(not open)
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if open else Input.MOUSE_MODE_HIDDEN
+
+func _on_player_died() -> void:
+	if market_panel.is_open():
+		_set_market_open(false)
+	security_director.set_security_enabled(false)
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
 func _setup_environment() -> void:
 	var sky_material := ProceduralSkyMaterial.new()

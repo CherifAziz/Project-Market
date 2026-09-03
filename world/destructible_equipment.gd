@@ -3,6 +3,7 @@ extends StaticBody3D
 
 signal destroyed(equipment_id: String, equipment: DestructibleEquipment)
 signal state_changed(equipment: DestructibleEquipment)
+signal attacked(equipment_id: String, equipment: DestructibleEquipment, hit_position: Vector3)
 
 enum EquipmentType {
 	FILTRATION,
@@ -31,6 +32,7 @@ enum OperationalState {
 var health := 0.0
 var operational_state: OperationalState = OperationalState.NOMINAL
 var _destroyed := false
+var _attack_reported := false
 var _offline_since_msec := -1
 var _visual: Node3D
 var _collision_shape: CollisionShape3D
@@ -71,6 +73,9 @@ func _process(delta: float) -> void:
 func take_damage(amount: float, hit_position: Vector3, _hit_normal: Vector3, _shot_direction: Vector3) -> void:
 	if _destroyed:
 		return
+	if amount > 0.0 and not _attack_reported:
+		_attack_reported = true
+		attacked.emit(equipment_id, self, hit_position)
 	health = maxf(health - amount, 0.0)
 	if health > 0.0 and operational_state == OperationalState.NOMINAL and get_health_ratio() <= damaged_health_ratio:
 		_enter_damaged_state()

@@ -1,6 +1,6 @@
 # PROJECT MARKET — Combat Playground
 
-Prototype jouable : mouvement indépendant de la visée, dash et SMG automatique dans un quartier financier miniature en fin d'après-midi. La boucle systémique relie désormais les installations physiques de VITA MEDICAL et ARC ENERGY à leurs cours, avec une dépendance énergétique explicite `ARC → VITA`.
+Prototype jouable : mouvement indépendant de la visée, dash d'esquive et SMG automatique dans un quartier financier miniature en fin d'après-midi. VITA MEDICAL et ARC ENERGY disposent chacune d'une sécurité locale : attaquer une installation transforme maintenant le sabotage financier en combat physique lisible. La boucle systémique `ARC → VITA` reste inchangée.
 
 ## Lancer
 
@@ -18,15 +18,15 @@ Ouvrir `project.godot` avec Godot 4.7.1 puis lancer le projet (`F6`/`F5`). Le re
 
 ## Périmètre
 
-Cette version contient VITA MEDICAL et ARC ENERGY, trois équipements critiques par installation et une position `SHORT ×300` indépendante par entreprise. Saboter ARC affecte directement ARC puis légèrement VITA via sa dépendance énergétique. Elle ne contient volontairement aucune simulation générique de supply chain, gestion de cash, position longue ou progression roguelite.
+Cette version contient VITA MEDICAL et ARC ENERGY, trois équipements critiques et deux gardes par installation, ainsi qu'une position `SHORT ×300` indépendante par entreprise. Les gardes patrouillent, détectent le joueur, répondent aux alertes locales et tirent après une télégraphie esquivable. Le joueur possède 100 PV et peut relancer immédiatement la scène avec `R` après sa mort. Saboter ARC affecte directement ARC puis légèrement VITA via sa dépendance énergétique. Elle ne contient volontairement aucune simulation générique de supply chain, gestion de cash, position longue, loot, police globale ou progression roguelite.
 
 ## Architecture
 
-- `player/` : locomotion, visée, dash et caméra de suivi
+- `player/` : locomotion, visée, dash invulnérable, santé/mort et caméra de suivi
 - `weapons/` + `data/` : comportement de tir et réglages d’armes en ressources `.tres`
-- `combat/` : cibles, points de vie et destruction
+- `combat/` : agents de sécurité stylisés et petite machine à états patrouille/engagement/tir
 - `effects/` : feedback visuel, hitstop, camera shake et premiers sons procéduraux mutualisés
-- `world/` : scène principale, arène et installations VITA / ARC ; le monde émet des faits de destruction
+- `world/` : scène principale, arène, installations VITA / ARC et directeur des alertes locales ; le monde émet des faits d'attaque/destruction
 - `economy/` : registre multi-entreprise unique, séquençage des réactions et calcul pur des positions short
 - `ui/` : HUD, réticule et vues marché réutilisables par entreprise ; aucun calcul économique dans l’UI
 - `data/` : définitions réutilisables des armes, entreprises et de la dépendance explicite `ARC → VITA`
@@ -40,7 +40,7 @@ Les réglages les plus directs sont regroupés dans :
 - `world/main.gd` : exposition, lumière ambiante, saturation, SSAO et glow
 - `world/main.tscn` : angle, couleur et énergie du soleil
 - `world/arena_builder.gd` : palette des matériaux et composition urbaine
-- `player/player.tscn` et `combat/damageable_target.tscn` : couleurs de lecture des personnages
+- `player/player.tscn` et `combat/security_agent.tscn` : couleurs et silhouettes de lecture des personnages
 - `data/starter_smg.tres` et `effects/effects_service.gd` : couleurs et intensité des VFX ponctuels
 
 ## Smoke test
@@ -49,4 +49,5 @@ Les réglages les plus directs sont regroupés dans :
 godot --headless --path . --script res://tests/playground_smoke_test.gd
 godot --headless --path . --script res://tests/market_logic_test.gd
 godot --headless --path . --script res://tests/market_flow_test.gd
+godot --headless --path . --script res://tests/security_flow_test.gd
 ```
