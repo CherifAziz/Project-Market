@@ -7,6 +7,9 @@ const MARKET_ROW_SCENE := preload("res://ui/market_hud_row.tscn")
 @onready var notification_panel: PanelContainer = %NotificationPanel
 @onready var notification_label: Label = %NotificationLabel
 @onready var profit_label: Label = %ProfitLabel
+@onready var cash_label: Label = %CashLabel
+@onready var unrealized_label: Label = %UnrealizedLabel
+@onready var realized_label: Label = %RealizedLabel
 
 var _market: MarketService
 var _rows: Dictionary = {}
@@ -21,6 +24,7 @@ func _ready() -> void:
 		_market.operational_event.connect(_on_operational_event)
 		_market.price_reaction_started.connect(_on_price_reaction_started)
 		_market.sabotage_resolved.connect(_on_sabotage_resolved)
+		_market.account_updated.connect(_refresh_account)
 	_refresh_all()
 
 func get_company_row(company_id: String) -> MarketHUDRow:
@@ -40,10 +44,19 @@ func _on_market_updated(company_id: String) -> void:
 	var row := get_company_row(company_id)
 	if row != null:
 		row.refresh()
+	_refresh_account()
 
 func _refresh_all() -> void:
 	for row_value in _rows.values():
 		(row_value as MarketHUDRow).refresh()
+	_refresh_account()
+
+func _refresh_account() -> void:
+	if _market == null:
+		return
+	cash_label.text = "CASH  %s" % MoneyFormat.cash(_market.get_cash())
+	unrealized_label.text = "UNREALIZED  %s" % MoneyFormat.pnl(_market.get_total_unrealized_pnl())
+	realized_label.text = "REALIZED  %s" % MoneyFormat.pnl(_market.get_total_realized_pnl())
 
 func _on_operational_event(company_id: String, message: String, stage: int, total: int, cause_company_id: String) -> void:
 	if _notification_tween != null and _notification_tween.is_valid():
@@ -90,8 +103,8 @@ func _show_profit_payoff(company_id: String, unrealized_pnl: float, is_final: bo
 		_profit_tween.kill()
 	var company := _market.get_company_definition(company_id)
 	var ticker := company.ticker if company != null else company_id.to_upper()
-	profit_label.text = "%s  %s" % [ticker, _format_pnl(unrealized_pnl)]
-	profit_label.add_theme_font_size_override("font_size", 40 if is_final else 27)
+	profit_label.text = "%s  %s  / UNREALIZED" % [ticker, MoneyFormat.pnl(unrealized_pnl)]
+	profit_label.add_theme_font_size_override("font_size", 28 if is_final else 22)
 	profit_label.visible = true
 	profit_label.modulate = Color(0.65, 0.8, 0.65, 0.0)
 	profit_label.scale = Vector2(0.82, 0.82) if is_final else Vector2(0.92, 0.92)
@@ -104,19 +117,3 @@ func _show_profit_payoff(company_id: String, unrealized_pnl: float, is_final: bo
 	_profit_tween.tween_interval(1.65 if is_final else 0.7)
 	_profit_tween.tween_property(profit_label, "modulate:a", 0.0, 0.4)
 	_profit_tween.finished.connect(func() -> void: profit_label.visible = false)
-
-func _format_pnl(value: float) -> String:
-	var rounded_value := int(round(value))
-	if rounded_value > 0:
-		return "+$%s" % _with_thousands(rounded_value)
-	if rounded_value < 0:
-		return "-$%s" % _with_thousands(absi(rounded_value))
-	return "$0"
-
-func _with_thousands(value: int) -> String:
-	var digits := str(value)
-	var result := ""
-	while digits.length() > 3:
-		result = "," + digits.right(3) + result
-		digits = digits.left(digits.length() - 3)
-	return digits + result

@@ -3,6 +3,8 @@ extends Node
 
 signal market_updated(company_id: String)
 signal position_opened(company_id: String)
+signal position_closed(company_id: String, realized_pnl: float)
+signal account_updated
 signal operational_event(company_id: String, message: String, stage: int, total: int, cause_company_id: String)
 signal price_reaction_started(company_id: String, target_price: float, cause_company_id: String)
 signal sabotage_resolved(company_id: String, current_price: float, unrealized_pnl: float, cause_company_id: String, is_final_stage: bool)
@@ -11,6 +13,7 @@ signal sabotage_resolved(company_id: String, current_price: float, unrealized_pn
 @export var dependencies: Array[MarketDependency] = []
 @export_range(1, 10000, 1) var default_short_shares := 300
 @export_range(0.01, 2.0, 0.01) var reaction_time_scale := 1.0
+@export var starting_cash := 10000.0
 
 var _states: Dictionary = {}
 var _company_order: Array[String] = []
@@ -18,6 +21,10 @@ var _dependency_applied_stages: Dictionary = {}
 var _processed_world_events: Dictionary = {}
 var _reaction_queue: Array[Dictionary] = []
 var _processing_queue := false
+var _cash := 0.0
+var _session_finished := false
+var _reaction_generation := 0
+var _active_price_tween: Tween
 
 func _ready() -> void:
 	add_to_group("market_service")
@@ -31,6 +38,8 @@ func _initialize_market() -> void:
 	_processed_world_events.clear()
 	_reaction_queue.clear()
 	_processing_queue = false
+	_cash = starting_cash
+	_session_finished = false
 
 	for definition in companies:
 		if definition == null or definition.company_id.is_empty():
@@ -46,6 +55,7 @@ func _initialize_market() -> void:
 			"applied_direct_stage": 0,
 			"destroyed_equipment": {},
 			"position": null,
+			"realized_pnl": 0.0,
 		}
 
 	for dependency in dependencies:
@@ -56,6 +66,7 @@ func _initialize_market() -> void:
 func _emit_initial_state() -> void:
 	for company_id in _company_order:
 		market_updated.emit(company_id)
+	account_updated.emit()
 
 func get_company_ids() -> Array[String]:
 	return _company_order.duplicate()
@@ -90,7 +101,7 @@ func get_equipment_total(company_id: String) -> int:
 	return definition.sabotage_stage_count() if definition != null else 0
 
 func open_short(company_id: String, share_count := -1) -> bool:
-	if not _states.has(company_id):
+	if _session_finished or not _states.has(company_id):
 		return false
 	var state: Dictionary = _states[company_id]
 	if state["position"] != null:
@@ -101,6 +112,87 @@ func open_short(company_id: String, share_count := -1) -> bool:
 	position_opened.emit(company_id)
 	market_updated.emit(company_id)
 	return true
+
+func close_short(company_id: String) -> bool:
+	if _session_finished or not has_open_position(company_id):
+		return false
+	_realize_position(company_id)
+	return true
+
+func get_cash() -> float:
+	return _cash
+
+func get_realized_pnl(company_id: String) -> float:
+	return float(_states[company_id]["realized_pnl"]) if _states.has(company_id) else 0.0
+
+func get_total_realized_pnl() -> float:
+	var total := 0.0
+	for company_id in _company_order:
+		total += get_realized_pnl(company_id)
+	return snappedf(total, 0.01)
+
+func is_trading_enabled() -> bool:
+	return not _session_finished
+
+func settle_all_positions() -> Dictionary:
+	if not _session_finished:
+		_finish_session()
+		for company_id in _company_order:
+			if has_open_position(company_id):
+				_realize_position(company_id)
+	return get_account_summary()
+
+func forfeit_run_profit() -> Dictionary:
+	if not _session_finished:
+		_finish_session()
+		_cash = starting_cash
+		for company_id in _company_order:
+			var state: Dictionary = _states[company_id]
+			state["position"] = null
+			state["realized_pnl"] = 0.0
+			market_updated.emit(company_id)
+		account_updated.emit()
+	return get_account_summary()
+
+func get_account_summary() -> Dictionary:
+	var company_results: Array[Dictionary] = []
+	for company_id in _company_order:
+		var definition := get_company_definition(company_id)
+		company_results.append({
+			"company_id": company_id,
+			"ticker": definition.ticker,
+			"realized_pnl": get_realized_pnl(company_id),
+		})
+	return {
+		"starting_cash": starting_cash,
+		"cash": _cash,
+		"realized_pnl": get_total_realized_pnl(),
+		"unrealized_pnl": get_total_unrealized_pnl(),
+		"companies": company_results,
+	}
+
+func _realize_position(company_id: String) -> void:
+	var state: Dictionary = _states[company_id]
+	var position := _get_position(company_id)
+	position.update_current_price(get_current_price(company_id))
+	var pnl := snappedf(position.unrealized_pnl(), 0.01)
+	state["position"] = null
+	state["realized_pnl"] = snappedf(float(state["realized_pnl"]) + pnl, 0.01)
+	_cash = snappedf(_cash + pnl, 0.01)
+	position_closed.emit(company_id, pnl)
+	market_updated.emit(company_id)
+	account_updated.emit()
+
+func _finish_session() -> void:
+	# Exit prices are the displayed prices now, not queued future sabotage prices.
+	_session_finished = true
+	_reaction_generation += 1
+	_reaction_queue.clear()
+	_processing_queue = false
+	if _active_price_tween != null and _active_price_tween.is_valid():
+		_active_price_tween.kill()
+	for company_id in _company_order:
+		market_updated.emit(company_id)
 
 func has_open_position(company_id: String) -> bool:
 	return _states.has(company_id) and _states[company_id]["position"] != null
@@ -124,7 +216,7 @@ func get_total_unrealized_pnl() -> float:
 	return total
 
 func register_sabotage(company_id: String, equipment_id: String) -> bool:
-	if not _states.has(company_id) or equipment_id.is_empty():
+	if _session_finished or not _states.has(company_id) or equipment_id.is_empty():
 		return false
 	var world_event_key := "%s::%s" % [company_id, equipment_id]
 	if _processed_world_events.has(world_event_key):
@@ -174,6 +266,7 @@ func register_sabotage(company_id: String, equipment_id: String) -> bool:
 
 func _process_reaction_queue() -> void:
 	_processing_queue = true
+	var generation := _reaction_generation
 	while not _reaction_queue.is_empty():
 		var reaction: Dictionary = _reaction_queue.pop_front()
 		var company_id: String = reaction["company_id"]
@@ -192,20 +285,27 @@ func _process_reaction_queue() -> void:
 		var delay := _reaction_delay(reaction) * reaction_time_scale
 		if delay > 0.0:
 			await get_tree().create_timer(delay, true, false, true).timeout
+		if generation != _reaction_generation:
+			return
 
 		_apply_reaction_stage(reaction)
 		var target_price := _calculate_target_price(company_id)
 		price_reaction_started.emit(company_id, target_price, cause_company_id)
 		var start_price := get_current_price(company_id)
 		var duration := maxf(_reaction_duration(reaction) * reaction_time_scale, 0.01)
-		var tween := create_tween().set_ignore_time_scale(true)
-		tween.tween_method(
+		_active_price_tween = create_tween().set_ignore_time_scale(true)
+		_active_price_tween.tween_method(
 			func(value: float) -> void: _set_current_price(company_id, value),
 			start_price,
 			target_price,
 			duration
 		).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
-		await tween.finished
+		# A timer also resumes safely when extraction cancels the active tween.
+		await get_tree().create_timer(duration, true, false, true).timeout
+		if generation != _reaction_generation:
+			return
+		if _active_price_tween.is_valid():
+			_active_price_tween.kill()
 		_set_current_price(company_id, target_price)
 		sabotage_resolved.emit(
 			company_id,
@@ -215,6 +315,8 @@ func _process_reaction_queue() -> void:
 			bool(reaction["is_final"])
 		)
 		await get_tree().create_timer(0.08 * reaction_time_scale, true, false, true).timeout
+		if generation != _reaction_generation:
+			return
 	_processing_queue = false
 
 func _apply_reaction_stage(reaction: Dictionary) -> void:
@@ -243,7 +345,7 @@ func _calculate_target_price(company_id: String) -> float:
 	return snappedf(price, 0.01)
 
 func _set_current_price(company_id: String, value: float) -> void:
-	if not _states.has(company_id):
+	if _session_finished or not _states.has(company_id):
 		return
 	var state: Dictionary = _states[company_id]
 	state["current_price"] = snappedf(value, 0.01)

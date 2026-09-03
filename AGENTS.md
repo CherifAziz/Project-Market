@@ -19,11 +19,13 @@
 - `combat/`: company security agents, their lightweight patrol/LOS/ranged-combat state machine, and health/destruction behavior.
 - `weapons/` + `data/`: weapon behavior and data-driven resources.
 - `effects/`: shared combat, destruction, and lightweight procedural audio feedback.
-- `world/`: main scene, procedural arena, company facilities, physical equipment, and `SecurityDirector` for local company alerts. World objects report facts through signals; they do not change stock prices directly.
-- `economy/`: one multi-company `MarketService` is the economic source of truth; `MarketDependency` data describes explicit cross-company reactions, and `ShortPosition` owns the pure P&L calculation.
-- `ui/`: HUD and market views display state from services; UI must not calculate or own economic state.
+- `world/`: main scene/run coordinator, procedural arena, company facilities, physical equipment, physical extraction point, and `SecurityDirector` for local alerts. World objects emit facts; they never change stock prices or cash directly.
+- `economy/`: one multi-company `MarketService` owns prices, positions, run cash, realized P&L and terminal settlement; `MarketDependency` describes cross-company reactions, and `ShortPosition` owns the pure P&L calculation.
+- `ui/`: HUD/market views display service state; `RunResults` animates a detached settled statement. UI must not calculate or own economic state.
 - Current economic boundary: `World / CompanyFacility -> Main coordinator -> Economy / MarketService -> UI`.
 - Current security boundary: `CompanyFacility equipment attack -> SecurityDirector -> matching company agents + HUD`. Keep security local to the attacked company; it must not own or mutate market state.
+- Current run boundary: `ExtractionPoint / player death -> Main -> MarketService settlement / forfeiture -> RunResults`. Extraction remains vulnerable until completion; only then stop combat.
+- V1 run rule: every run starts with $10,000; opening shorts does not debit or credit cash. Closing realizes P&L into run-local cash. Death forfeits all run P&L (including manually closed gains), cancels positions and restores starting capital. Extraction settles at current displayed prices. No permanent cash carryover or meta progression.
 - Keep these boundaries explicit and avoid circular dependencies. In particular, combat/weapons must not know about the market, and economy must not depend on the player or rendering.
 
 ## Validation requirements
@@ -36,6 +38,8 @@ godot --headless --path . --script res://tests/playground_smoke_test.gd
 godot --headless --path . --script res://tests/market_logic_test.gd
 godot --headless --path . --script res://tests/market_flow_test.gd
 godot --headless --path . --script res://tests/security_flow_test.gd
+godot --headless --path . --script res://tests/run_account_test.gd
+godot --headless --path . --script res://tests/run_flow_test.gd
 ```
 
 - Also launch or render the real project in Godot 4.7.1 when the change can affect scenes, shaders, input, visuals, physics, or signals. Check for script, shader, signal, and runtime errors.

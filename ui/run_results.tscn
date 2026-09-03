@@ -1,0 +1,173 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://ui/run_results.gd" id="1_results"]
+
+[sub_resource type="StyleBoxFlat" id="Style_statement"]
+bg_color = Color(0.075, 0.092, 0.085, 0.98)
+border_width_top = 3
+border_width_left = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.51, 0.59, 0.48, 0.8)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_left = 5
+corner_radius_bottom_right = 5
+shadow_color = Color(0.02, 0.028, 0.023, 0.7)
+shadow_size = 24
+
+[sub_resource type="StyleBoxFlat" id="Style_button"]
+bg_color = Color(0.25, 0.33, 0.27, 1)
+content_margin_left = 24.0
+content_margin_right = 24.0
+content_margin_top = 12.0
+content_margin_bottom = 12.0
+border_width_bottom = 2
+border_color = Color(0.55, 0.65, 0.51, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_left = 3
+corner_radius_bottom_right = 3
+
+[node name="RunResults" type="CanvasLayer"]
+visible = false
+layer = 40
+script = ExtResource("1_results")
+
+[node name="Backdrop" type="ColorRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.025, 0.034, 0.028, 0.76)
+
+[node name="Center" type="CenterContainer" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ResultPanel" type="PanelContainer" parent="Center"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(720, 610)
+layout_mode = 2
+theme_override_styles/panel = SubResource("Style_statement")
+
+[node name="Margin" type="MarginContainer" parent="Center/ResultPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 38
+theme_override_constants/margin_right = 38
+theme_override_constants/margin_top = 30
+theme_override_constants/margin_bottom = 28
+
+[node name="VBox" type="VBoxContainer" parent="Center/ResultPanel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="Eyebrow" type="Label" parent="Center/ResultPanel/Margin/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(0.57, 0.61, 0.54, 1)
+text = "PROJECT MARKET  /  RUN STATEMENT"
+
+[node name="ResultTitle" type="Label" parent="Center/ResultPanel/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 32
+theme_override_colors/font_color = Color(0.79, 0.85, 0.78, 1)
+text = "EXTRACTION COMPLETE"
+
+[node name="ResultSubtitle" type="Label" parent="Center/ResultPanel/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(0.6, 0.65, 0.57, 1)
+text = "POSITIONS SETTLED  //  PROFITS SECURED"
+
+[node name="TopRule" type="HSeparator" parent="Center/ResultPanel/Margin/VBox"]
+layout_mode = 2
+modulate = Color(0.48, 0.53, 0.45, 0.6)
+
+[node name="StartingRow" type="HBoxContainer" parent="Center/ResultPanel/Margin/VBox"]
+layout_mode = 2
+
+[node name="Caption" type="Label" parent="Center/ResultPanel/Margin/VBox/StartingRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 16
+theme_override_colors/font_color = Color(0.66, 0.68, 0.61, 1)
+text = "STARTING CASH"
+
+[node name="StartingCash" type="Label" parent="Center/ResultPanel/Margin/VBox/StartingRow"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "$10,000"
+
+[node name="CompanyResults" type="VBoxContainer" parent="Center/ResultPanel/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="BottomRule" type="HSeparator" parent="Center/ResultPanel/Margin/VBox"]
+layout_mode = 2
+modulate = Color(0.48, 0.53, 0.45, 0.6)
+
+[node name="ProfitRow" type="HBoxContainer" parent="Center/ResultPanel/Margin/VBox"]
+layout_mode = 2
+
+[node name="ProfitCaption" type="Label" parent="Center/ResultPanel/Margin/VBox/ProfitRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 17
+theme_override_colors/font_color = Color(0.73, 0.78, 0.68, 1)
+text = "RUN PROFIT"
+
+[node name="RunProfit" type="Label" parent="Center/ResultPanel/Margin/VBox/ProfitRow"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 31
+theme_override_colors/font_color = Color(0.64, 0.8, 0.62, 1)
+text = "+$9,900"
+
+[node name="CashRow" type="HBoxContainer" parent="Center/ResultPanel/Margin/VBox"]
+layout_mode = 2
+
+[node name="CashCaption" type="Label" parent="Center/ResultPanel/Margin/VBox/CashRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 17
+theme_override_colors/font_color = Color(0.85, 0.86, 0.77, 1)
+text = "NEW NET CASH"
+
+[node name="NetCash" type="Label" parent="Center/ResultPanel/Margin/VBox/CashRow"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 42
+theme_override_colors/font_color = Color(0.94, 0.9, 0.79, 1)
+text = "$19,900"
+
+[node name="RuleLabel" type="Label" parent="Center/ResultPanel/Margin/VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(0.58, 0.62, 0.55, 1)
+autowrap_mode = 2
+text = "A new run starts at $10,000. No permanent balance."
+
+[node name="RestartButton" type="Button" parent="Center/ResultPanel/Margin/VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 46)
+layout_mode = 2
+size_flags_vertical = 8
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.9, 0.91, 0.83, 1)
+theme_override_styles/normal = SubResource("Style_button")
+theme_override_styles/hover = SubResource("Style_button")
+theme_override_styles/focus = SubResource("Style_statement")
+text = "NEW RUN  //  R"

@@ -14,11 +14,15 @@ extends CanvasLayer
 @onready var damage_flash: ColorRect = %DamageFlash
 @onready var security_alert_panel: PanelContainer = %SecurityAlertPanel
 @onready var security_alert_label: Label = %SecurityAlertLabel
-@onready var death_overlay: Control = %DeathOverlay
 @onready var crosshair: Control = $Crosshair
+@onready var extraction_label: Label = %ExtractionLabel
+@onready var extraction_detail: Label = %ExtractionDetail
+@onready var extraction_progress: ProgressBar = %ExtractionProgress
+@onready var extraction_arrow: Label = %ExtractionArrow
 
 var _player: PlayerController
 var _security_director: SecurityDirector
+var _extraction: ExtractionPoint
 var _initial_target_count := 0
 var _focused_equipment: DestructibleEquipment
 var _damage_flash_tween: Tween
@@ -32,6 +36,7 @@ func _ready() -> void:
 	call_deferred("_bind_runtime_signals")
 
 func _bind_runtime_signals() -> void:
+	_extraction = get_tree().get_first_node_in_group("extraction_point") as ExtractionPoint
 	if is_instance_valid(_player):
 		if not _player.health_changed.is_connected(_on_player_health_changed):
 			_player.health_changed.connect(_on_player_health_changed)
@@ -62,12 +67,39 @@ func _process(delta: float) -> void:
 		_initial_target_count = remaining
 	target_label.text = "%02d" % remaining
 	if _initial_target_count > 0 and remaining == 0:
-		sector_label.text = "SECURITY NEUTRALIZED  //  R TO RESET"
+		sector_label.text = "SECURITY NEUTRALIZED  //  EXTRACT"
 		sector_label.modulate = Color("9fc49f")
 	else:
 		sector_label.text = "SECURITY PRESENCE"
 
 	_update_equipment_context(delta)
+	_update_extraction_hint()
+
+func _update_extraction_hint() -> void:
+	if not is_instance_valid(_extraction) or not is_instance_valid(_player):
+		return
+	var available := _extraction.is_available()
+	var nearby := _extraction.is_player_near()
+	extraction_progress.visible = available and nearby
+	extraction_progress.value = _extraction.get_progress() * 100.0
+	extraction_arrow.visible = available and not nearby
+	if not available:
+		extraction_label.text = "SABOTAGE  →  SURVIVE  →  EXTRACT"
+		extraction_detail.text = "ATTACK A COMPANY MACHINE TO UNLOCK THE EXIT"
+	elif not nearby:
+		extraction_label.text = "SERVICE EXIT  //  %d m" % int(ceil(_extraction.get_player_distance()))
+		extraction_detail.text = "REACH THE EXIT TO SECURE ALL RUN GAINS"
+	elif _extraction.is_interrupted():
+		extraction_label.text = "HIT  //  EXTRACTION INTERRUPTED"
+		extraction_detail.text = "GET CLEAR — THEN HOLD E AGAIN"
+	else:
+		extraction_label.text = "EXTRACTING  %02d%%" % int(extraction_progress.value) if _extraction.get_progress() > 0.0 else "HOLD E  //  EXTRACT  %.1f s" % _extraction.hold_duration
+		extraction_detail.text = "STAY STILL — DASH OR DAMAGE INTERRUPTS"
+	var camera := get_viewport().get_camera_3d()
+	if camera != null and extraction_arrow.visible:
+		var direction := camera.unproject_position(_extraction.global_position) - camera.unproject_position(_player.global_position)
+		extraction_arrow.pivot_offset = extraction_arrow.size * 0.5
+		extraction_arrow.rotation = direction.angle() + PI * 0.5
 
 func _update_equipment_context(delta: float) -> void:
 	var equipment := _find_context_equipment()
@@ -157,7 +189,6 @@ func _on_player_damaged(_amount: float, _current_health: float) -> void:
 	_damage_flash_tween.tween_property(damage_flash, "color:a", 0.0, 0.32).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 
 func _on_player_died() -> void:
-	death_overlay.visible = true
 	crosshair.visible = false
 	equipment_context.visible = false
 	dash_label.text = "DASH  UNAVAILABLE"

@@ -38,7 +38,7 @@ func refresh() -> void:
 	if has_position:
 		position_label.text = "SHORT ×%d" % _market.get_position_shares(company_id)
 		var pnl := _market.get_unrealized_pnl(company_id)
-		pnl_label.text = "P&L  %s" % _format_pnl(pnl)
+		pnl_label.text = "UNRL  %s" % MoneyFormat.pnl(pnl)
 		pnl_label.add_theme_color_override("font_color", Color("9fc49f") if pnl >= 0.0 else Color("c77c60"))
 
 func pulse_price() -> void:
@@ -61,19 +61,3 @@ func pulse_pnl() -> void:
 
 func _set_price_color_blend(weight: float) -> void:
 	price_label.add_theme_color_override("font_color", Color("d68d69").lerp(Color("eee8dc"), weight))
-
-func _format_pnl(value: float) -> String:
-	var rounded_value := int(round(value))
-	if rounded_value > 0:
-		return "+$%s" % _with_thousands(rounded_value)
-	if rounded_value < 0:
-		return "-$%s" % _with_thousands(absi(rounded_value))
-	return "$0"
-
-func _with_thousands(value: int) -> String:
-	var digits := str(value)
-	var result := ""
-	while digits.length() > 3:
-		result = "," + digits.right(3) + result
-		digits = digits.left(digits.length() - 3)
-	return digits + result

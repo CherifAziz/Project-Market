@@ -12,6 +12,8 @@ const CUE_PROFIT_FINAL := &"profit_final"
 const CUE_SECURITY_SHOT := &"security_shot"
 const CUE_SECURITY_ALERT := &"security_alert"
 const CUE_PLAYER_HIT := &"player_hit"
+const CUE_EXTRACTION_START := &"extraction_start"
+const CUE_RUN_SETTLED := &"run_settled"
 
 const MIX_RATE := 22050
 const WORLD_POOL_SIZE := 14
@@ -82,6 +84,8 @@ func _build_cues() -> void:
 	_add_cue(CUE_SECURITY_SHOT, 0.11, -10.5)
 	_add_cue(CUE_SECURITY_ALERT, 0.52, -9.0)
 	_add_cue(CUE_PLAYER_HIT, 0.2, -9.5)
+	_add_cue(CUE_EXTRACTION_START, 0.4, -13.0)
+	_add_cue(CUE_RUN_SETTLED, 1.15, -9.0)
 
 func _add_cue(cue: StringName, duration: float, volume_db: float) -> void:
 	_streams[cue] = _synthesize(cue, duration)
@@ -153,6 +157,11 @@ func _sample_cue(cue: StringName, time: float, duration: float) -> float:
 		CUE_PLAYER_HIT:
 			var impact_body := sin(TAU * (78.0 - progress * 22.0) * time) * exp(-time * 13.0)
 			return (impact_body * 0.82 + noise_sample * exp(-time * 25.0) * 0.18) * _attack(time, 0.002)
+		CUE_EXTRACTION_START:
+			return (sin(TAU * 330.0 * time) * 0.27 + sin(TAU * 440.0 * time) * 0.13) * _soft_release(progress)
+		CUE_RUN_SETTLED:
+			var chord := sin(TAU * 220.0 * time) * 0.3 + sin(TAU * 330.0 * time) * 0.2 + sin(TAU * 440.0 * time) * 0.12
+			return chord * _attack(time, 0.035) * exp(-time * 2.6)
 	return 0.0
 
 func _attack(time: float, attack_duration: float) -> float:

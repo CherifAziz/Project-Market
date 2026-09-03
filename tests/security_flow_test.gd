@@ -80,9 +80,9 @@ func _run() -> void:
 	player.take_damage(player.health, player.global_position + Vector3.UP, Vector3.UP, Vector3.FORWARD)
 	await process_frame
 	_check(not player.is_alive(), "lethal damage enters a clean player death state")
-	_check((main.get_node("HUD/DeathOverlay") as Control).visible, "death exposes the immediate R-to-restart prompt")
+	_check((main.get_node("RunResults") as RunResults).visible, "death exposes the immediate run-result restart prompt")
 	_check(not director.is_security_enabled(), "security simulation settles when the player is dead")
-	_check(market.has_open_position("arc_energy") and market.has_open_position("vita_medical"), "death does not mutate open market positions before restart")
+	_check(not market.has_open_position("arc_energy") and not market.has_open_position("vita_medical") and market.get_cash() == market.starting_cash, "death discards run positions and restores starting capital under the extraction loss rule")
 	_check(is_equal_approx(market.get_current_price("arc_energy"), arc_price_before_death) and is_equal_approx(market.get_current_price("vita_medical"), vita_price_before_death), "death does not mutate market prices")
 
 	await _remove_main(main)

@@ -1,4 +1,4 @@
-[gd_scene load_steps=16 format=3]
+[gd_scene load_steps=18 format=3]
 
 [ext_resource type="Script" path="res://world/main.gd" id="1_main"]
 [ext_resource type="Script" path="res://world/arena_builder.gd" id="2_arena"]
@@ -15,6 +15,8 @@
 [ext_resource type="Resource" path="res://data/arc_energy.tres" id="13_arc"]
 [ext_resource type="Resource" path="res://data/arc_powers_vita.tres" id="14_arc_vita"]
 [ext_resource type="Script" path="res://world/security_director.gd" id="15_security"]
+[ext_resource type="PackedScene" path="res://world/extraction_point.tscn" id="16_exit"]
+[ext_resource type="PackedScene" path="res://ui/run_results.tscn" id="17_results"]
 
 [node name="Main" type="Node3D"]
 script = ExtResource("1_main")
@@ -80,3 +82,8 @@ far = 90.0
 [node name="MarketHUD" parent="." instance=ExtResource("11_market_hud")]
 
 [node name="MarketPanel" parent="." instance=ExtResource("10_market_panel")]
+
+[node name="ExtractionPoint" parent="." instance=ExtResource("16_exit")]
+position = Vector3(6.9, 0, 10.3)
+
+[node name="RunResults" parent="." instance=ExtResource("17_results")]

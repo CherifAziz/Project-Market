@@ -35,6 +35,7 @@ var _dash_tween: Tween
 var _gameplay_input_enabled := true
 var _hurt_invulnerability_left := 0.0
 var _dead := false
+var _damage_enabled := true
 var _damage_tween: Tween
 var _death_tween: Tween
 var _flash_materials: Array[Dictionary] = []
@@ -150,8 +151,11 @@ func set_gameplay_input_enabled(enabled: bool) -> void:
 func is_gameplay_input_enabled() -> bool:
 	return _gameplay_input_enabled
 
+func set_damage_enabled(enabled: bool) -> void:
+	_damage_enabled = enabled
+
 func take_damage(amount: float, hit_position := Vector3.ZERO, _hit_normal := Vector3.UP, shot_direction := Vector3.ZERO) -> bool:
-	if _dead or amount <= 0.0 or _hurt_invulnerability_left > 0.0 or is_dashing():
+	if _dead or not _damage_enabled or amount <= 0.0 or _hurt_invulnerability_left > 0.0 or is_dashing():
 		return false
 	health = maxf(health - amount, 0.0)
 	_hurt_invulnerability_left = hurt_invulnerability

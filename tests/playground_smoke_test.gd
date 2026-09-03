@@ -35,12 +35,12 @@ func _run() -> void:
 	_check(company_equipment.size() == 6, "the shared equipment pipeline registers both facilities")
 	_check(audio != null and audio.has_method("play_world") and audio.has_method("play_ui"), "reusable audio service is present")
 	if audio:
-		var required_cues := [&"smg", &"metal_impact", &"machine_damaged", &"machine_destroyed", &"market_confirm", &"market_drop", &"profit_tick", &"profit_final", &"security_shot", &"security_alert", &"player_hit"]
+		var required_cues := [&"smg", &"metal_impact", &"machine_damaged", &"machine_destroyed", &"market_confirm", &"market_drop", &"profit_tick", &"profit_final", &"security_shot", &"security_alert", &"player_hit", &"extraction_start", &"run_settled"]
 		_check(required_cues.all(func(cue: StringName) -> bool: return audio.has_cue(cue)), "all first-pass audio cues are generated")
 	if not company_equipment.is_empty():
 		_check(company_equipment.all(func(machine: DestructibleEquipment) -> bool: return machine.find_children("*", "Label3D", true, false).is_empty()), "all machines use contextual UI instead of permanent labels")
 	_check(main.has_node("HUD/EquipmentContext"), "HUD owns one contextual equipment identifier")
-	_check(main.has_node("HUD/PlayerStatus") and main.has_node("HUD/DeathOverlay"), "HUD exposes player health and a fast restart state")
+	_check(main.has_node("HUD/PlayerStatus") and main.has_node("RunResults") and main.has_node("HUD/ExtractionHint"), "HUD exposes health, extraction and a shared result/restart screen")
 	_check(get_nodes_in_group("camera_occluder").size() > 0, "large buildings participate in camera occlusion fading")
 	var market := get_first_node_in_group("market_service") as MarketService
 	var market_panel := main.get_node("MarketPanel") as MarketPanel

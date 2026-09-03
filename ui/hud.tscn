@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=3]
+[gd_scene load_steps=13 format=3]
 
 [ext_resource type="Script" path="res://ui/hud.gd" id="1_hud"]
 [ext_resource type="Script" path="res://ui/crosshair.gd" id="2_crosshair"]
@@ -81,20 +81,6 @@ corner_radius_bottom_left = 3
 corner_radius_bottom_right = 3
 shadow_color = Color(0.025, 0.03, 0.028, 0.52)
 shadow_size = 8
-
-[sub_resource type="StyleBoxFlat" id="Style_death"]
-bg_color = Color(0.075, 0.08, 0.075, 0.97)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 3
-border_color = Color(0.55, 0.31, 0.25, 0.9)
-corner_radius_top_left = 4
-corner_radius_top_right = 4
-corner_radius_bottom_right = 4
-corner_radius_bottom_left = 4
-shadow_color = Color(0.02, 0.025, 0.022, 0.7)
-shadow_size = 14
 
 [node name="HUD" type="CanvasLayer"]
 layer = 10
@@ -238,7 +224,7 @@ theme_override_colors/font_shadow_color = Color(0.12, 0.15, 0.15, 0.72)
 theme_override_constants/shadow_offset_x = 1
 theme_override_constants/shadow_offset_y = 1
 theme_override_font_sizes/font_size = 11
-text = "WASD / ZQSD  MOVE     LMB  FIRE     M  MARKET\nSPACE / SHIFT  DASH     R  RESET"
+text = "WASD / ZQSD  MOVE     LMB  FIRE     M  MARKET\nSPACE / SHIFT  DASH     E  EXTRACT     R  NEW RUN"
 
 [node name="DashPanel" type="VBoxContainer" parent="."]
 anchors_preset = 7
@@ -374,70 +360,68 @@ grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("2_crosshair")
 
-[node name="DeathOverlay" type="Control" parent="."]
+[node name="ExtractionHint" type="PanelContainer" parent="."]
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -240.0
+offset_top = -155.0
+offset_right = 240.0
+offset_bottom = -76.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("Style_context")
+
+[node name="Margin" type="MarginContainer" parent="ExtractionHint"]
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 10
+
+[node name="HBox" type="HBoxContainer" parent="ExtractionHint/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="ExtractionArrow" type="Label" parent="ExtractionHint/Margin/HBox"]
 unique_name_in_owner = true
-visible = false
-layout_mode = 3
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-
-[node name="Shade" type="ColorRect" parent="DeathOverlay"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-color = Color(0.08, 0.055, 0.045, 0.42)
-
-[node name="Center" type="CenterContainer" parent="DeathOverlay"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-
-[node name="Panel" type="PanelContainer" parent="DeathOverlay/Center"]
-custom_minimum_size = Vector2(440, 150)
+custom_minimum_size = Vector2(28, 28)
 layout_mode = 2
-theme_override_styles/panel = SubResource("Style_death")
+size_flags_vertical = 4
+theme_override_colors/font_color = Color(0.64, 0.77, 0.6, 1)
+theme_override_font_sizes/font_size = 22
+text = "▲"
+horizontal_alignment = 1
+vertical_alignment = 1
 
-[node name="Margin" type="MarginContainer" parent="DeathOverlay/Center/Panel"]
+[node name="VBox" type="VBoxContainer" parent="ExtractionHint/Margin/HBox"]
 layout_mode = 2
-theme_override_constants/margin_left = 28
-theme_override_constants/margin_top = 22
-theme_override_constants/margin_right = 28
-theme_override_constants/margin_bottom = 20
+size_flags_horizontal = 3
+theme_override_constants/separation = 5
 
-[node name="VBox" type="VBoxContainer" parent="DeathOverlay/Center/Panel/Margin"]
+[node name="ExtractionLabel" type="Label" parent="ExtractionHint/Margin/HBox/VBox"]
+unique_name_in_owner = true
 layout_mode = 2
-theme_override_constants/separation = 8
-alignment = 1
-
-[node name="Title" type="Label" parent="DeathOverlay/Center/Panel/Margin/VBox"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.91, 0.75, 0.66, 1)
-theme_override_font_sizes/font_size = 23
-text = "ASSET LIQUIDATED"
+theme_override_colors/font_color = Color(0.87, 0.87, 0.76, 1)
+theme_override_font_sizes/font_size = 13
+text = "SABOTAGE  →  SURVIVE  →  EXTRACT"
 horizontal_alignment = 1
 
-[node name="Message" type="Label" parent="DeathOverlay/Center/Panel/Margin/VBox"]
+[node name="ExtractionDetail" type="Label" parent="ExtractionHint/Margin/HBox/VBox"]
+unique_name_in_owner = true
 layout_mode = 2
-theme_override_colors/font_color = Color(0.74, 0.72, 0.66, 1)
-theme_override_font_sizes/font_size = 11
-text = "PHYSICAL RISK REALIZED  //  RERUN AVAILABLE"
+theme_override_colors/font_color = Color(0.62, 0.66, 0.56, 1)
+theme_override_font_sizes/font_size = 10
+text = "ATTACK A COMPANY MACHINE TO UNLOCK THE EXIT"
 horizontal_alignment = 1
 
-[node name="Restart" type="Label" parent="DeathOverlay/Center/Panel/Margin/VBox"]
+[node name="ExtractionProgress" type="ProgressBar" parent="ExtractionHint/Margin/HBox/VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 5)
 layout_mode = 2
-theme_override_colors/font_color = Color(0.95, 0.91, 0.81, 1)
-theme_override_font_sizes/font_size = 14
-text = "PRESS  R  TO RESTART"
-horizontal_alignment = 1
+theme_override_styles/background = SubResource("Style_context_hp_back")
+theme_override_styles/fill = SubResource("Style_context_hp_fill")
+show_percentage = false

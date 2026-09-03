@@ -66,6 +66,8 @@ var _dead := false
 var _ai_enabled := true
 var _walk_time := 0.0
 var _strafe_side := 1.0
+var _avoidance_direction := Vector3.ZERO
+var _avoidance_left := 0.0
 var _flash_tween: Tween
 var _death_tween: Tween
 var _flash_materials: Array[Dictionary] = []
@@ -100,6 +102,7 @@ func _physics_process(delta: float) -> void:
 
 	_fire_cooldown_left = maxf(_fire_cooldown_left - delta, 0.0)
 	_perception_cooldown = maxf(_perception_cooldown - delta, 0.0)
+	_avoidance_left = maxf(_avoidance_left - delta, 0.0)
 
 	if not _ai_enabled:
 		_stop_horizontal(delta)
@@ -313,9 +316,39 @@ func _move_in_direction(direction: Vector3, speed: float, delta: float) -> void:
 	if direction.length_squared() < 0.01:
 		_stop_horizontal(delta)
 		return
+	if state == State.ENGAGE:
+		direction = _steer_around_obstacle(direction)
 	velocity.x = move_toward(velocity.x, direction.x * speed, acceleration * delta)
 	velocity.z = move_toward(velocity.z, direction.z * speed, acceleration * delta)
 	_face_direction(direction, delta)
+
+func _steer_around_obstacle(direction: Vector3) -> Vector3:
+	# Short committed sidesteps are enough for this map's low facility barriers.
+	if _avoidance_left > 0.0 and _movement_probe(_avoidance_direction).is_empty():
+		return _avoidance_direction
+	var obstacle := _movement_probe(direction)
+	if obstacle.is_empty():
+		return direction
+	var normal: Vector3 = obstacle["normal"]
+	var tangent := Vector3(-normal.z, 0.0, normal.x).normalized()
+	if tangent.length_squared() < 0.01:
+		tangent = Vector3(-direction.z, 0.0, direction.x)
+	var pursuit := _flat_direction_to(_player.global_position) if is_instance_valid(_player) else direction
+	if tangent.dot(pursuit) < 0.0:
+		tangent = -tangent
+	if not _movement_probe(tangent).is_empty():
+		tangent = -tangent
+	if not _movement_probe(tangent).is_empty():
+		tangent = -direction
+	_avoidance_direction = tangent
+	_avoidance_left = 0.65
+	return tangent
+
+func _movement_probe(direction: Vector3) -> Dictionary:
+	var origin := global_position + Vector3.UP * 0.45
+	var query := PhysicsRayQueryParameters3D.create(origin, origin + direction * 0.85, 3)
+	query.exclude = [get_rid()]
+	return get_world_3d().direct_space_state.intersect_ray(query)
 
 func _stop_horizontal(delta: float) -> void:
 	velocity.x = move_toward(velocity.x, 0.0, acceleration * 1.35 * delta)

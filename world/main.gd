@@ -1,25 +1,33 @@
 extends Node3D
 
+enum RunState { ACTIVE, EXTRACTED, FAILED }
+
+var run_state: RunState = RunState.ACTIVE
+
 @onready var world_environment: WorldEnvironment = $WorldEnvironment
 @onready var player: PlayerController = $Player
 @onready var market_service: MarketService = $MarketService
 @onready var market_panel: MarketPanel = $MarketPanel
 @onready var security_director: SecurityDirector = $SecurityDirector
+@onready var extraction: ExtractionPoint = $ExtractionPoint
+@onready var run_results: RunResults = $RunResults
 
 func _ready() -> void:
 	Engine.time_scale = 1.0
 	Input.mouse_mode = Input.MOUSE_MODE_HIDDEN
 	_setup_environment()
 	player.died.connect(_on_player_died)
+	extraction.extraction_completed.connect(_on_extraction_completed)
+	run_results.restart_requested.connect(_restart_run)
 	for facility_node in get_tree().get_nodes_in_group("company_facility"):
 		var facility := facility_node as CompanyFacility
 		if facility != null:
 			facility.equipment_destroyed.connect(_on_facility_equipment_destroyed)
+			facility.equipment_attacked.connect(_on_facility_equipment_attacked)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("restart"):
-		Engine.time_scale = 1.0
-		get_tree().reload_current_scene()
+		_restart_run()
 	elif event.is_action_pressed("market"):
 		_set_market_open(not market_panel.is_open())
 	elif event.is_action_pressed("ui_cancel"):
@@ -35,8 +43,9 @@ func _on_facility_equipment_destroyed(company_id: String, equipment_id: String, 
 	market_service.register_sabotage(company_id, equipment_id)
 
 func _set_market_open(open: bool) -> void:
-	if open and not player.is_alive():
+	if run_state != RunState.ACTIVE or not player.is_alive():
 		return
+	extraction.cancel_interaction()
 	if open:
 		market_panel.open_market()
 	else:
@@ -46,10 +55,35 @@ func _set_market_open(open: bool) -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if open else Input.MOUSE_MODE_HIDDEN
 
 func _on_player_died() -> void:
-	if market_panel.is_open():
-		_set_market_open(false)
+	if run_state != RunState.ACTIVE:
+		return
+	run_state = RunState.FAILED
+	_finish_run(false, market_service.forfeit_run_profit())
+
+func _on_facility_equipment_attacked(_company_id: String, _equipment_id: String, _hit_position: Vector3) -> void:
+	if run_state == RunState.ACTIVE:
+		extraction.unlock()
+
+func _on_extraction_completed() -> void:
+	if run_state != RunState.ACTIVE or not player.is_alive():
+		return
+	run_state = RunState.EXTRACTED
+	_finish_run(true, market_service.settle_all_positions())
+
+func _finish_run(success: bool, summary: Dictionary) -> void:
+	market_panel.close_market()
+	player.set_gameplay_input_enabled(false)
+	player.set_damage_enabled(false)
 	security_director.set_security_enabled(false)
+	extraction.end_run()
+	$HUD.visible = false
+	$MarketHUD.visible = false
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	run_results.present(success, summary)
+
+func _restart_run() -> void:
+	Engine.time_scale = 1.0
+	get_tree().reload_current_scene()
 
 func _setup_environment() -> void:
 	var sky_material := ProceduralSkyMaterial.new()

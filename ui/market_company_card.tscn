@@ -27,7 +27,7 @@ corner_radius_bottom_right = 3
 corner_radius_bottom_left = 3
 
 [node name="MarketCompanyCard" type="PanelContainer"]
-custom_minimum_size = Vector2(0, 225)
+custom_minimum_size = Vector2(0, 235)
 theme_override_styles/panel = SubResource("Style_card")
 script = ExtResource("1_card")
 
@@ -108,10 +108,22 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.62, 0.77, 0.62, 1)
 theme_override_font_sizes/font_size = 15
 
-[node name="ShortButton" type="Button" parent="Margin/VBox"]
+[node name="RealizedPnL" type="Label" parent="Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.66, 0.72, 0.62, 1)
+theme_override_font_sizes/font_size = 11
+text = "REALIZED THIS RUN   $0"
+
+[node name="Actions" type="HBoxContainer" parent="Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="ShortButton" type="Button" parent="Margin/VBox/Actions"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 37)
 layout_mode = 2
+size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.95, 0.94, 0.88, 1)
 theme_override_colors/font_disabled_color = Color(0.5, 0.52, 0.49, 1)
 theme_override_font_sizes/font_size = 12
@@ -120,3 +132,16 @@ theme_override_styles/hover = SubResource("Style_button")
 theme_override_styles/pressed = SubResource("Style_card")
 theme_override_styles/disabled = SubResource("Style_card")
 text = "SHORT 300 SHARES"
+
+[node name="CloseButton" type="Button" parent="Margin/VBox/Actions"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(0, 37)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.93, 0.9, 0.78, 1)
+theme_override_font_sizes/font_size = 12
+theme_override_styles/normal = SubResource("Style_button")
+theme_override_styles/hover = SubResource("Style_button")
+theme_override_styles/pressed = SubResource("Style_card")
+text = "CLOSE POSITION"
