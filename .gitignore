@@ -1,0 +1,8 @@
+# Godot editor/import cache
+.godot/
+.tools/
+
+# Local validation captures
+*.log
+movie_*.png
+movie_*.wav

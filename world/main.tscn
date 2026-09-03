@@ -1,0 +1,100 @@
+[gd_scene load_steps=21 format=3]
+
+[ext_resource type="Script" path="res://world/main.gd" id="1_main"]
+[ext_resource type="Script" path="res://world/arena_builder.gd" id="2_arena"]
+[ext_resource type="Script" path="res://effects/effects_service.gd" id="3_effects"]
+[ext_resource type="PackedScene" path="res://player/player.tscn" id="4_player"]
+[ext_resource type="Script" path="res://player/follow_camera.gd" id="5_camera"]
+[ext_resource type="PackedScene" path="res://ui/hud.tscn" id="6_hud"]
+[ext_resource type="Script" path="res://economy/market_service.gd" id="7_market"]
+[ext_resource type="Resource" path="res://data/vita_medical.tres" id="8_vita"]
+[ext_resource type="PackedScene" path="res://world/company_facility.tscn" id="9_facility"]
+[ext_resource type="PackedScene" path="res://ui/market_panel.tscn" id="10_market_panel"]
+[ext_resource type="PackedScene" path="res://ui/market_hud.tscn" id="11_market_hud"]
+[ext_resource type="Script" path="res://effects/audio_service.gd" id="12_audio"]
+[ext_resource type="Resource" path="res://data/arc_energy.tres" id="13_arc"]
+[ext_resource type="Resource" path="res://data/arc_powers_vita.tres" id="14_arc_vita"]
+[ext_resource type="Script" path="res://world/security_director.gd" id="15_security"]
+[ext_resource type="PackedScene" path="res://world/extraction_point.tscn" id="16_exit"]
+[ext_resource type="PackedScene" path="res://ui/run_results.tscn" id="17_results"]
+[ext_resource type="Script" path="res://inventory/run_inventory.gd" id="18_inventory"]
+[ext_resource type="Script" path="res://player/loot_interactor.gd" id="19_interactor"]
+[ext_resource type="PackedScene" path="res://ui/inventory_hud.tscn" id="20_cargo_hud"]
+
+[node name="Main" type="Node3D"]
+script = ExtResource("1_main")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+
+[node name="GoldenSun" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-34, -124, 0)
+light_color = Color(1, 0.78, 0.56, 1)
+light_energy = 1.08
+shadow_enabled = true
+directional_shadow_max_distance = 44.0
+directional_shadow_fade_start = 0.86
+
+[node name="SkyFill" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-58, 42, 0)
+light_color = Color(0.59, 0.69, 0.72, 1)
+light_energy = 0.2
+shadow_enabled = false
+
+[node name="MarketService" type="Node" parent="."]
+script = ExtResource("7_market")
+companies = [ExtResource("8_vita"), ExtResource("13_arc")]
+dependencies = [ExtResource("14_arc_vita")]
+
+[node name="RunInventory" type="Node" parent="."]
+script = ExtResource("18_inventory")
+
+[node name="ArenaBuilder" type="Node3D" parent="."]
+script = ExtResource("2_arena")
+
+[node name="VITAFacility" parent="." instance=ExtResource("9_facility")]
+position = Vector3(-2, 0, -10.2)
+company = ExtResource("8_vita")
+
+[node name="ARCFacility" parent="." instance=ExtResource("9_facility")]
+position = Vector3(-9.55, 0, 8.8)
+company = ExtResource("13_arc")
+facility_type = 1
+
+[node name="SecurityDirector" type="Node3D" parent="."]
+script = ExtResource("15_security")
+
+[node name="Effects" type="Node3D" parent="."]
+script = ExtResource("3_effects")
+
+[node name="Audio" type="Node" parent="."]
+script = ExtResource("12_audio")
+
+[node name="Player" parent="." instance=ExtResource("4_player")]
+position = Vector3(0, 0.7, 4.0)
+
+[node name="CameraRig" type="Node3D" parent="."]
+script = ExtResource("5_camera")
+
+[node name="Camera3D" type="Camera3D" parent="CameraRig"]
+position = Vector3(0, 13.8, 10.8)
+rotation_degrees = Vector3(-51.5, 0, 0)
+current = true
+fov = 45.0
+near = 0.08
+far = 90.0
+
+[node name="HUD" parent="." instance=ExtResource("6_hud")]
+
+[node name="MarketHUD" parent="." instance=ExtResource("11_market_hud")]
+
+[node name="MarketPanel" parent="." instance=ExtResource("10_market_panel")]
+
+[node name="ExtractionPoint" parent="." instance=ExtResource("16_exit")]
+position = Vector3(6.9, 0, 10.3)
+
+[node name="LootInteractor" type="Node" parent="."]
+script = ExtResource("19_interactor")
+
+[node name="InventoryHUD" parent="." instance=ExtResource("20_cargo_hud")]
+
+[node name="RunResults" parent="." instance=ExtResource("17_results")]

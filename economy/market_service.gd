@@ -1,0 +1,410 @@
+class_name MarketService
+extends Node
+
+signal market_updated(company_id: String)
+signal position_opened(company_id: String)
+signal position_closed(company_id: String, realized_pnl: float)
+signal account_updated
+signal operational_event(company_id: String, message: String, stage: int, total: int, cause_company_id: String)
+signal price_reaction_started(company_id: String, target_price: float, cause_company_id: String)
+signal sabotage_resolved(company_id: String, current_price: float, unrealized_pnl: float, cause_company_id: String, is_final_stage: bool)
+
+@export var companies: Array[CompanyDefinition] = []
+@export var dependencies: Array[MarketDependency] = []
+@export_range(1, 10000, 1) var default_short_shares := 300
+@export_range(0.01, 2.0, 0.01) var reaction_time_scale := 1.0
+@export var starting_cash := 10000.0
+
+var _states: Dictionary = {}
+var _company_order: Array[String] = []
+var _dependency_applied_stages: Dictionary = {}
+var _processed_world_events: Dictionary = {}
+var _reaction_queue: Array[Dictionary] = []
+var _processing_queue := false
+var _cash := 0.0
+var _loot_revenue := 0.0
+var _sold_items: Array[Dictionary] = []
+var _session_finished := false
+var _reaction_generation := 0
+var _active_price_tween: Tween
+
+func _ready() -> void:
+	add_to_group("market_service")
+	_initialize_market()
+	call_deferred("_emit_initial_state")
+
+func _initialize_market() -> void:
+	_states.clear()
+	_company_order.clear()
+	_dependency_applied_stages.clear()
+	_processed_world_events.clear()
+	_reaction_queue.clear()
+	_processing_queue = false
+	_cash = starting_cash
+	_loot_revenue = 0.0
+	_sold_items.clear()
+	_session_finished = false
+
+	for definition in companies:
+		if definition == null or definition.company_id.is_empty():
+			continue
+		if _states.has(definition.company_id):
+			push_warning("Duplicate company id ignored: %s" % definition.company_id)
+			continue
+		_company_order.append(definition.company_id)
+		_states[definition.company_id] = {
+			"definition": definition,
+			"current_price": definition.initial_price,
+			"registered_direct_stage": 0,
+			"applied_direct_stage": 0,
+			"destroyed_equipment": {},
+			"position": null,
+			"realized_pnl": 0.0,
+		}
+
+	for dependency in dependencies:
+		if dependency == null or dependency.dependency_id.is_empty():
+			continue
+		_dependency_applied_stages[dependency.dependency_id] = 0
+
+func _emit_initial_state() -> void:
+	for company_id in _company_order:
+		market_updated.emit(company_id)
+	account_updated.emit()
+
+func get_company_ids() -> Array[String]:
+	return _company_order.duplicate()
+
+func get_company_definition(company_id: String) -> CompanyDefinition:
+	if not _states.has(company_id):
+		return null
+	return _states[company_id]["definition"] as CompanyDefinition
+
+func get_current_price(company_id: String) -> float:
+	if not _states.has(company_id):
+		return 0.0
+	return float(_states[company_id]["current_price"])
+
+func get_initial_price(company_id: String) -> float:
+	var definition := get_company_definition(company_id)
+	return definition.initial_price if definition != null else 0.0
+
+func get_variation_percent(company_id: String) -> float:
+	var initial := get_initial_price(company_id)
+	if is_zero_approx(initial):
+		return 0.0
+	return (get_current_price(company_id) / initial - 1.0) * 100.0
+
+func get_destroyed_equipment_count(company_id: String) -> int:
+	if not _states.has(company_id):
+		return 0
+	return int(_states[company_id]["registered_direct_stage"])
+
+func get_equipment_total(company_id: String) -> int:
+	var definition := get_company_definition(company_id)
+	return definition.sabotage_stage_count() if definition != null else 0
+
+func open_short(company_id: String, share_count := -1) -> bool:
+	if _session_finished or not _states.has(company_id):
+		return false
+	var state: Dictionary = _states[company_id]
+	if state["position"] != null:
+		return false
+	var resolved_share_count := default_short_shares if share_count <= 0 else share_count
+	state["position"] = ShortPosition.new(get_current_price(company_id), resolved_share_count)
+	_states[company_id] = state
+	position_opened.emit(company_id)
+	market_updated.emit(company_id)
+	return true
+
+func close_short(company_id: String) -> bool:
+	if _session_finished or not has_open_position(company_id):
+		return false
+	_realize_position(company_id)
+	return true
+
+func get_cash() -> float:
+	return _cash
+
+func get_realized_pnl(company_id: String) -> float:
+	return float(_states[company_id]["realized_pnl"]) if _states.has(company_id) else 0.0
+
+func get_total_realized_pnl() -> float:
+	var total := 0.0
+	for company_id in _company_order:
+		total += get_realized_pnl(company_id)
+	return snappedf(total, 0.01)
+
+func is_trading_enabled() -> bool:
+	return not _session_finished
+
+func settle_all_positions(loot_manifest: Array[Dictionary] = []) -> Dictionary:
+	if not _session_finished:
+		_finish_session()
+		for company_id in _company_order:
+			if has_open_position(company_id):
+				_realize_position(company_id)
+		# The run coordinator supplies the inventory manifest, never a UI-computed total.
+		var sold_ids: Dictionary = {}
+		for item in loot_manifest:
+			var id := String(item.get("id", ""))
+			var value := float(item.get("value", -1.0))
+			if id.is_empty() or sold_ids.has(id) or value < 0.0 or not is_finite(value):
+				continue
+			sold_ids[id] = true
+			_sold_items.append(item.duplicate(true))
+			_loot_revenue = snappedf(_loot_revenue + value, 0.01)
+		_cash = snappedf(_cash + _loot_revenue, 0.01)
+		account_updated.emit()
+	return get_account_summary()
+
+func forfeit_run_profit() -> Dictionary:
+	if not _session_finished:
+		_finish_session()
+		_cash = starting_cash
+		_loot_revenue = 0.0
+		_sold_items.clear()
+		for company_id in _company_order:
+			var state: Dictionary = _states[company_id]
+			state["position"] = null
+			state["realized_pnl"] = 0.0
+			market_updated.emit(company_id)
+		account_updated.emit()
+	return get_account_summary()
+
+func get_account_summary() -> Dictionary:
+	var company_results: Array[Dictionary] = []
+	for company_id in _company_order:
+		var definition := get_company_definition(company_id)
+		company_results.append({
+			"company_id": company_id,
+			"ticker": definition.ticker,
+			"realized_pnl": get_realized_pnl(company_id),
+		})
+	return {
+		"starting_cash": starting_cash,
+		"cash": _cash,
+		"realized_pnl": get_total_realized_pnl(),
+		"market_profit": get_total_realized_pnl(),
+		"stolen_assets": _loot_revenue,
+		"run_profit": snappedf(get_total_realized_pnl() + _loot_revenue, 0.01),
+		"sold_items": _sold_items.duplicate(true),
+		"unrealized_pnl": get_total_unrealized_pnl(),
+		"companies": company_results,
+	}
+
+func _realize_position(company_id: String) -> void:
+	var state: Dictionary = _states[company_id]
+	var position := _get_position(company_id)
+	position.update_current_price(get_current_price(company_id))
+	var pnl := snappedf(position.unrealized_pnl(), 0.01)
+	state["position"] = null
+	state["realized_pnl"] = snappedf(float(state["realized_pnl"]) + pnl, 0.01)
+	_cash = snappedf(_cash + pnl, 0.01)
+	position_closed.emit(company_id, pnl)
+	market_updated.emit(company_id)
+	account_updated.emit()
+
+func _finish_session() -> void:
+	# Exit prices are the displayed prices now, not queued future sabotage prices.
+	_session_finished = true
+	_reaction_generation += 1
+	_reaction_queue.clear()
+	_processing_queue = false
+	if _active_price_tween != null and _active_price_tween.is_valid():
+		_active_price_tween.kill()
+	for company_id in _company_order:
+		market_updated.emit(company_id)
+
+func has_open_position(company_id: String) -> bool:
+	return _states.has(company_id) and _states[company_id]["position"] != null
+
+func get_position_entry_price(company_id: String) -> float:
+	var position := _get_position(company_id)
+	return position.entry_price if position != null else 0.0
+
+func get_position_shares(company_id: String) -> int:
+	var position := _get_position(company_id)
+	return position.shares if position != null else 0
+
+func get_unrealized_pnl(company_id: String) -> float:
+	var position := _get_position(company_id)
+	return position.unrealized_pnl() if position != null else 0.0
+
+func get_total_unrealized_pnl() -> float:
+	var total := 0.0
+	for company_id in _company_order:
+		total += get_unrealized_pnl(company_id)
+	return total
+
+func register_sabotage(company_id: String, equipment_id: String) -> bool:
+	if _session_finished or not _states.has(company_id) or equipment_id.is_empty():
+		return false
+	var world_event_key := "%s::%s" % [company_id, equipment_id]
+	if _processed_world_events.has(world_event_key):
+		return false
+
+	var definition := get_company_definition(company_id)
+	var state: Dictionary = _states[company_id]
+	var next_stage := int(state["registered_direct_stage"]) + 1
+	if next_stage > definition.sabotage_stage_count():
+		return false
+
+	_processed_world_events[world_event_key] = true
+	var destroyed_equipment: Dictionary = state["destroyed_equipment"]
+	destroyed_equipment[equipment_id] = true
+	state["destroyed_equipment"] = destroyed_equipment
+	state["registered_direct_stage"] = next_stage
+	_states[company_id] = state
+
+	_reaction_queue.append({
+		"kind": "direct",
+		"company_id": company_id,
+		"stage": next_stage,
+		"message": definition.message_after_sabotage(next_stage),
+		"cause_company_id": company_id,
+		"is_final": next_stage >= definition.sabotage_stage_count(),
+	})
+
+	for dependency in dependencies:
+		if dependency == null or dependency.source_company_id != company_id:
+			continue
+		if not _states.has(dependency.target_company_id):
+			continue
+		_reaction_queue.append({
+			"kind": "dependency",
+			"company_id": dependency.target_company_id,
+			"dependency_id": dependency.dependency_id,
+			"stage": next_stage,
+			"message": dependency.message_after_source_sabotage(next_stage),
+			"cause_company_id": company_id,
+			"is_final": next_stage >= dependency.stage_count(),
+		})
+
+	market_updated.emit(company_id)
+	if not _processing_queue:
+		_process_reaction_queue()
+	return true
+
+func _process_reaction_queue() -> void:
+	_processing_queue = true
+	var generation := _reaction_generation
+	while not _reaction_queue.is_empty():
+		var reaction: Dictionary = _reaction_queue.pop_front()
+		var company_id: String = reaction["company_id"]
+		if not _states.has(company_id):
+			continue
+		var stage := int(reaction["stage"])
+		var cause_company_id: String = reaction["cause_company_id"]
+		operational_event.emit(
+			company_id,
+			String(reaction["message"]),
+			stage,
+			_reaction_total(reaction),
+			cause_company_id
+		)
+
+		var delay := _reaction_delay(reaction) * reaction_time_scale
+		if delay > 0.0:
+			await get_tree().create_timer(delay, true, false, true).timeout
+		if generation != _reaction_generation:
+			return
+
+		_apply_reaction_stage(reaction)
+		var target_price := _calculate_target_price(company_id)
+		price_reaction_started.emit(company_id, target_price, cause_company_id)
+		var start_price := get_current_price(company_id)
+		var duration := maxf(_reaction_duration(reaction) * reaction_time_scale, 0.01)
+		_active_price_tween = create_tween().set_ignore_time_scale(true)
+		_active_price_tween.tween_method(
+			func(value: float) -> void: _set_current_price(company_id, value),
+			start_price,
+			target_price,
+			duration
+		).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
+		# A timer also resumes safely when extraction cancels the active tween.
+		await get_tree().create_timer(duration, true, false, true).timeout
+		if generation != _reaction_generation:
+			return
+		if _active_price_tween.is_valid():
+			_active_price_tween.kill()
+		_set_current_price(company_id, target_price)
+		sabotage_resolved.emit(
+			company_id,
+			target_price,
+			get_unrealized_pnl(company_id),
+			cause_company_id,
+			bool(reaction["is_final"])
+		)
+		await get_tree().create_timer(0.08 * reaction_time_scale, true, false, true).timeout
+		if generation != _reaction_generation:
+			return
+	_processing_queue = false
+
+func _apply_reaction_stage(reaction: Dictionary) -> void:
+	var stage := int(reaction["stage"])
+	if reaction["kind"] == "direct":
+		var company_id: String = reaction["company_id"]
+		var state: Dictionary = _states[company_id]
+		state["applied_direct_stage"] = maxi(int(state["applied_direct_stage"]), stage)
+		_states[company_id] = state
+	else:
+		var dependency_id: String = reaction["dependency_id"]
+		_dependency_applied_stages[dependency_id] = maxi(
+			int(_dependency_applied_stages.get(dependency_id, 0)),
+			stage
+		)
+
+func _calculate_target_price(company_id: String) -> float:
+	var state: Dictionary = _states[company_id]
+	var definition: CompanyDefinition = state["definition"]
+	var price := definition.initial_price * definition.sabotage_multiplier(int(state["applied_direct_stage"]))
+	for dependency in dependencies:
+		if dependency == null or dependency.target_company_id != company_id:
+			continue
+		var applied_stage := int(_dependency_applied_stages.get(dependency.dependency_id, 0))
+		price *= dependency.multiplier_after_source_sabotage(applied_stage)
+	return snappedf(price, 0.01)
+
+func _set_current_price(company_id: String, value: float) -> void:
+	if _session_finished or not _states.has(company_id):
+		return
+	var state: Dictionary = _states[company_id]
+	state["current_price"] = snappedf(value, 0.01)
+	var position: ShortPosition = state["position"]
+	if position != null:
+		position.update_current_price(float(state["current_price"]))
+	_states[company_id] = state
+	market_updated.emit(company_id)
+
+func _reaction_total(reaction: Dictionary) -> int:
+	if reaction["kind"] == "direct":
+		var definition := get_company_definition(reaction["company_id"])
+		return definition.sabotage_stage_count() if definition != null else 0
+	var dependency := _get_dependency(reaction["dependency_id"])
+	return dependency.stage_count() if dependency != null else 0
+
+func _reaction_delay(reaction: Dictionary) -> float:
+	if reaction["kind"] == "direct":
+		var definition := get_company_definition(reaction["company_id"])
+		return definition.reaction_delay if definition != null else 0.0
+	var dependency := _get_dependency(reaction["dependency_id"])
+	return dependency.reaction_delay if dependency != null else 0.0
+
+func _reaction_duration(reaction: Dictionary) -> float:
+	if reaction["kind"] == "direct":
+		var definition := get_company_definition(reaction["company_id"])
+		return definition.price_transition_duration if definition != null else 0.05
+	var dependency := _get_dependency(reaction["dependency_id"])
+	return dependency.price_transition_duration if dependency != null else 0.05
+
+func _get_position(company_id: String) -> ShortPosition:
+	if not _states.has(company_id):
+		return null
+	return _states[company_id]["position"] as ShortPosition
+
+func _get_dependency(dependency_id: String) -> MarketDependency:
+	for dependency in dependencies:
+		if dependency != null and dependency.dependency_id == dependency_id:
+			return dependency
+	return null

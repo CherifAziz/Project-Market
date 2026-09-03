@@ -1,0 +1,142 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://ui/market_panel.gd" id="1_panel"]
+
+[sub_resource type="StyleBoxFlat" id="Style_panel"]
+bg_color = Color(0.105, 0.118, 0.112, 0.97)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.42, 0.5, 0.44, 0.75)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+shadow_color = Color(0.03, 0.04, 0.035, 0.62)
+shadow_size = 18
+
+[node name="MarketPanel" type="CanvasLayer"]
+visible = false
+layer = 30
+script = ExtResource("1_panel")
+
+[node name="Backdrop" type="ColorRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+color = Color(0.035, 0.042, 0.04, 0.08)
+
+[node name="Center" type="PanelContainer" parent="."]
+anchors_preset = 8
+anchor_left = 1.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = -680.0
+offset_top = -390.0
+offset_right = -30.0
+offset_bottom = 390.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("Style_panel")
+
+[node name="Margin" type="MarginContainer" parent="Center"]
+layout_mode = 2
+theme_override_constants/margin_left = 28
+theme_override_constants/margin_top = 22
+theme_override_constants/margin_right = 28
+theme_override_constants/margin_bottom = 20
+
+[node name="VBox" type="VBoxContainer" parent="Center/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="MarketHeader" type="Label" parent="Center/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.72, 0.74, 0.69, 1)
+theme_override_font_sizes/font_size = 13
+text = "PROJECT MARKET  //  LIVE COMPANIES"
+
+[node name="MarketSubtitle" type="Label" parent="Center/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.53, 0.56, 0.52, 1)
+theme_override_font_sizes/font_size = 10
+text = "WORLD LIVE  //  YOU ARE STATIONARY AND EXPOSED"
+
+[node name="Account" type="HBoxContainer" parent="Center/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 24
+
+[node name="Cash" type="VBoxContainer" parent="Center/Margin/VBox/Account"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Caption" type="Label" parent="Center/Margin/VBox/Account/Cash"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+theme_override_colors/font_color = Color(0.66, 0.68, 0.6, 1)
+text = "RUN CASH"
+
+[node name="AccountCash" type="Label" parent="Center/Margin/VBox/Account/Cash"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "$10,000"
+
+[node name="Unrealized" type="VBoxContainer" parent="Center/Margin/VBox/Account"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Caption" type="Label" parent="Center/Margin/VBox/Account/Unrealized"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+theme_override_colors/font_color = Color(0.66, 0.68, 0.6, 1)
+text = "UNREALIZED P&L"
+
+[node name="AccountUnrealized" type="Label" parent="Center/Margin/VBox/Account/Unrealized"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+theme_override_colors/font_color = Color(0.72, 0.8, 0.67, 1)
+text = "$0"
+
+[node name="Realized" type="VBoxContainer" parent="Center/Margin/VBox/Account"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Caption" type="Label" parent="Center/Margin/VBox/Account/Realized"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+theme_override_colors/font_color = Color(0.66, 0.68, 0.6, 1)
+text = "REALIZED P&L"
+
+[node name="AccountRealized" type="Label" parent="Center/Margin/VBox/Account/Realized"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+theme_override_colors/font_color = Color(0.65, 0.79, 0.62, 1)
+text = "$0"
+
+[node name="CompanyList" type="VBoxContainer" parent="Center/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 10
+
+[node name="DependencyHint" type="Label" parent="Center/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.68, 0.62, 0.52, 1)
+theme_override_font_sizes/font_size = 10
+text = "MARKET LINK  //  ARC ENERGY POWERS VITA MEDICAL"
+horizontal_alignment = 1
+
+[node name="Footer" type="Label" parent="Center/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.52, 0.54, 0.5, 1)
+theme_override_font_sizes/font_size = 10
+text = "M / ESC  RETURN TO COMBAT  ·  SECURITY DOES NOT PAUSE\nDEATH LOSES CARGO + ALL RUN GAINS, EVEN CLOSED ONES.\nOPENING A SHORT DOES NOT SPEND CASH"
+horizontal_alignment = 1

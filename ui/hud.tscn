@@ -1,0 +1,403 @@
+[gd_scene load_steps=13 format=3]
+
+[ext_resource type="Script" path="res://ui/hud.gd" id="1_hud"]
+[ext_resource type="Script" path="res://ui/crosshair.gd" id="2_crosshair"]
+[ext_resource type="Shader" path="res://ui/screen_overlay.gdshader" id="3_overlay"]
+
+[sub_resource type="ShaderMaterial" id="Mat_overlay"]
+shader = ExtResource("3_overlay")
+
+[sub_resource type="StyleBoxFlat" id="Style_dash_back"]
+bg_color = Color(0.09, 0.12, 0.12, 0.72)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.52, 0.58, 0.55, 0.62)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="Style_dash_fill"]
+bg_color = Color(0.39, 0.57, 0.56, 0.94)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="Style_context"]
+bg_color = Color(0.085, 0.1, 0.095, 0.92)
+border_width_left = 2
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.4, 0.5, 0.43, 0.78)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+shadow_color = Color(0.025, 0.03, 0.028, 0.5)
+shadow_size = 6
+
+[sub_resource type="StyleBoxFlat" id="Style_context_hp_back"]
+bg_color = Color(0.055, 0.065, 0.062, 0.95)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="Style_context_hp_fill"]
+bg_color = Color(0.39, 0.55, 0.45, 0.95)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="Style_player_hp_back"]
+bg_color = Color(0.07, 0.08, 0.075, 0.9)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.45, 0.49, 0.45, 0.68)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="Style_player_hp_fill"]
+bg_color = Color(0.47, 0.61, 0.5, 0.96)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="Style_security_alert"]
+bg_color = Color(0.08, 0.09, 0.085, 0.95)
+border_width_bottom = 2
+border_color = Color(0.58, 0.43, 0.3, 0.9)
+corner_radius_bottom_left = 3
+corner_radius_bottom_right = 3
+shadow_color = Color(0.025, 0.03, 0.028, 0.52)
+shadow_size = 8
+
+[node name="HUD" type="CanvasLayer"]
+layer = 10
+script = ExtResource("1_hud")
+
+[node name="ScreenOverlay" type="ColorRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+material = SubResource("Mat_overlay")
+color = Color(1, 1, 1, 1)
+
+[node name="DamageFlash" type="ColorRect" parent="."]
+unique_name_in_owner = true
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.55, 0.08, 0.04, 0)
+
+[node name="TopLeft" type="MarginContainer" parent="."]
+offset_left = 34.0
+offset_top = 27.0
+offset_right = 360.0
+offset_bottom = 105.0
+
+[node name="VBox" type="VBoxContainer" parent="TopLeft"]
+layout_mode = 2
+theme_override_constants/separation = -2
+
+[node name="Title" type="Label" parent="TopLeft/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.96, 0.94, 0.89, 1)
+theme_override_colors/font_shadow_color = Color(0.12, 0.15, 0.15, 0.78)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+theme_override_font_sizes/font_size = 18
+text = "PROJECT / MARKET"
+
+[node name="Subtitle" type="Label" parent="TopLeft/VBox"]
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.8, 0.69, 0.92)
+theme_override_colors/font_shadow_color = Color(0.12, 0.15, 0.15, 0.72)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 11
+text = "GOLDEN DISTRICT  //  COMBAT SANDBOX  01"
+
+[node name="TopRight" type="VBoxContainer" parent="."]
+visible = false
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -276.0
+offset_top = 30.0
+offset_right = -35.0
+offset_bottom = 105.0
+grow_horizontal = 0
+alignment = 2
+
+[node name="TargetLabel" type="Label" parent="TopRight"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.55, 0.38, 1)
+theme_override_colors/font_shadow_color = Color(0.12, 0.15, 0.15, 0.72)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+theme_override_font_sizes/font_size = 34
+text = "00"
+horizontal_alignment = 2
+
+[node name="SectorLabel" type="Label" parent="TopRight"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.86, 0.83, 0.75, 0.92)
+theme_override_colors/font_shadow_color = Color(0.12, 0.15, 0.15, 0.72)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 11
+text = "SECURITY PRESENCE"
+horizontal_alignment = 2
+
+[node name="PlayerStatus" type="VBoxContainer" parent="."]
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 34.0
+offset_top = -68.0
+offset_right = 294.0
+offset_bottom = -34.0
+grow_vertical = 0
+theme_override_constants/separation = 4
+
+[node name="PlayerHealthLabel" type="Label" parent="PlayerStatus"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.87, 0.8, 0.96)
+theme_override_colors/font_shadow_color = Color(0.12, 0.15, 0.15, 0.72)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 10
+text = "HEALTH  100"
+
+[node name="PlayerHealthBar" type="ProgressBar" parent="PlayerStatus"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(260, 7)
+layout_mode = 2
+theme_override_styles/background = SubResource("Style_player_hp_back")
+theme_override_styles/fill = SubResource("Style_player_hp_fill")
+value = 100.0
+show_percentage = false
+
+
+[node name="DashPanel" type="VBoxContainer" parent="."]
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -125.0
+offset_top = -57.0
+offset_right = 125.0
+offset_bottom = -23.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_constants/separation = 4
+
+[node name="DashLabel" type="Label" parent="DashPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.89, 0.87, 0.8, 0.94)
+theme_override_colors/font_shadow_color = Color(0.12, 0.15, 0.15, 0.72)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 10
+text = "DASH  READY"
+horizontal_alignment = 1
+
+[node name="DashBar" type="ProgressBar" parent="DashPanel"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(250, 5)
+layout_mode = 2
+theme_override_styles/background = SubResource("Style_dash_back")
+theme_override_styles/fill = SubResource("Style_dash_fill")
+value = 100.0
+show_percentage = false
+
+[node name="EquipmentContext" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(270, 76)
+offset_right = 270.0
+offset_bottom = 76.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("Style_context")
+
+[node name="Margin" type="MarginContainer" parent="EquipmentContext"]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 9
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 9
+
+[node name="VBox" type="VBoxContainer" parent="EquipmentContext/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="IdentityRow" type="HBoxContainer" parent="EquipmentContext/Margin/VBox"]
+layout_mode = 2
+
+[node name="EquipmentName" type="Label" parent="EquipmentContext/Margin/VBox/IdentityRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.92, 0.9, 0.84, 1)
+theme_override_font_sizes/font_size = 11
+text = "VITA  //  FILTRATION UNIT"
+
+[node name="EquipmentStatus" type="Label" parent="EquipmentContext/Margin/VBox/IdentityRow"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.58, 0.72, 0.61, 1)
+theme_override_font_sizes/font_size = 10
+text = "NOMINAL"
+horizontal_alignment = 2
+
+[node name="IntegrityRow" type="HBoxContainer" parent="EquipmentContext/Margin/VBox"]
+layout_mode = 2
+
+[node name="IntegrityTitle" type="Label" parent="EquipmentContext/Margin/VBox/IntegrityRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.58, 0.6, 0.56, 1)
+theme_override_font_sizes/font_size = 9
+text = "SYSTEM INTEGRITY"
+
+[node name="EquipmentIntegrity" type="Label" parent="EquipmentContext/Margin/VBox/IntegrityRow"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.76, 0.75, 0.69, 1)
+theme_override_font_sizes/font_size = 9
+text = "100%"
+
+[node name="EquipmentHealthBar" type="ProgressBar" parent="EquipmentContext/Margin/VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 5)
+layout_mode = 2
+theme_override_styles/background = SubResource("Style_context_hp_back")
+theme_override_styles/fill = SubResource("Style_context_hp_fill")
+value = 100.0
+show_percentage = false
+
+[node name="SecurityAlertCenter" type="CenterContainer" parent="."]
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = 36.0
+offset_bottom = 84.0
+grow_horizontal = 2
+mouse_filter = 2
+
+[node name="SecurityAlertPanel" type="PanelContainer" parent="SecurityAlertCenter"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(430, 42)
+layout_mode = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("Style_security_alert")
+
+[node name="SecurityAlertLabel" type="Label" parent="SecurityAlertCenter/SecurityAlertPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.72, 0.55, 1)
+theme_override_font_sizes/font_size = 13
+text = "ARC SECURITY ALERT  //  LEVEL 01"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Crosshair" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("2_crosshair")
+
+[node name="ExtractionHint" type="PanelContainer" parent="."]
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -155.0
+offset_top = -126.0
+offset_right = 155.0
+offset_bottom = -76.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("Style_context")
+
+[node name="Margin" type="MarginContainer" parent="ExtractionHint"]
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 10
+
+[node name="HBox" type="HBoxContainer" parent="ExtractionHint/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="ExtractionArrow" type="Label" parent="ExtractionHint/Margin/HBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(28, 28)
+layout_mode = 2
+size_flags_vertical = 4
+theme_override_colors/font_color = Color(0.64, 0.77, 0.6, 1)
+theme_override_font_sizes/font_size = 22
+text = "▲"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="VBox" type="VBoxContainer" parent="ExtractionHint/Margin/HBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 5
+
+[node name="ExtractionLabel" type="Label" parent="ExtractionHint/Margin/HBox/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.87, 0.87, 0.76, 1)
+theme_override_font_sizes/font_size = 13
+text = "SABOTAGE  →  SURVIVE  →  EXTRACT"
+horizontal_alignment = 1
+
+[node name="ExtractionDetail" type="Label" parent="ExtractionHint/Margin/HBox/VBox"]
+visible = false
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.62, 0.66, 0.56, 1)
+theme_override_font_sizes/font_size = 10
+text = "ATTACK A COMPANY MACHINE TO UNLOCK THE EXIT"
+horizontal_alignment = 1
+
+[node name="ExtractionProgress" type="ProgressBar" parent="ExtractionHint/Margin/HBox/VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 5)
+layout_mode = 2
+theme_override_styles/background = SubResource("Style_context_hp_back")
+theme_override_styles/fill = SubResource("Style_context_hp_fill")
+show_percentage = false
