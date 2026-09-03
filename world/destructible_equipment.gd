@@ -8,6 +8,9 @@ enum EquipmentType {
 	FILTRATION,
 	PRODUCTION,
 	COLD_STORAGE,
+	TRANSFORMER,
+	SWITCHGEAR,
+	GENERATOR,
 }
 
 enum OperationalState {
@@ -19,6 +22,7 @@ enum OperationalState {
 @export var equipment_id := "equipment"
 @export var display_name := "CRITICAL EQUIPMENT"
 @export var owner_company_id := "company"
+@export var owner_ticker := "COMP"
 @export var equipment_type: EquipmentType = EquipmentType.FILTRATION
 @export var max_health := 96.0
 @export_range(0.1, 0.9, 0.05) var damaged_health_ratio := 0.55
@@ -39,7 +43,8 @@ var _destruction_tween: Tween
 var _flash_materials: Array[Dictionary] = []
 
 func _ready() -> void:
-	add_to_group("vita_equipment")
+	add_to_group("company_equipment")
+	add_to_group("%s_equipment" % owner_company_id)
 	collision_layer = 2
 	collision_mask = 0
 	health = max_health
@@ -55,6 +60,10 @@ func _process(delta: float) -> void:
 				_animated_part.rotation.x += delta * 1.3
 			EquipmentType.COLD_STORAGE:
 				_animated_part.rotation.z -= delta * 1.8
+			EquipmentType.TRANSFORMER:
+				_animated_part.rotation.z += delta * 0.7
+			EquipmentType.GENERATOR:
+				_animated_part.rotation.x += delta * 2.2
 	if operational_state == OperationalState.DAMAGED and _warning_material:
 		var pulse := 0.45 + maxf(sin(Time.get_ticks_msec() * 0.009), 0.0) * 0.75
 		_warning_material.emission_energy_multiplier = pulse
@@ -175,6 +184,12 @@ func _build_visual() -> void:
 			_build_production(body_material, light_material, dark_material, accent_material, rubber_material)
 		EquipmentType.COLD_STORAGE:
 			_build_cold_storage(body_material, light_material, dark_material, accent_material)
+		EquipmentType.TRANSFORMER:
+			_build_transformer(body_material, light_material, dark_material, accent_material, rubber_material)
+		EquipmentType.SWITCHGEAR:
+			_build_switchgear(body_material, light_material, dark_material, accent_material)
+		EquipmentType.GENERATOR:
+			_build_generator(body_material, light_material, dark_material, accent_material, rubber_material)
 
 	_collision_shape = CollisionShape3D.new()
 	_collision_shape.name = "CollisionShape3D"
@@ -231,6 +246,51 @@ func _build_cold_storage(body: Material, light: Material, dark: Material, accent
 	for angle in [0.0, 90.0]:
 		_add_box("FanBlade", Vector3.ZERO, Vector3(0.08, 0.66, 0.045), dark, Vector3(0, 0, float(angle)), _animated_part)
 	_add_cylinder("FanHub", Vector3(0, 0, -0.035), 0.11, 0.1, accent, Vector3(90, 0, 0), _animated_part)
+
+func _build_transformer(body: Material, light: Material, dark: Material, accent: Material, rubber: Material) -> void:
+	_add_box("Base", Vector3(0, 0.12, 0), Vector3(1.72, 0.24, 1.25), dark)
+	_add_box("TransformerCore", Vector3(0, 0.9, 0), Vector3(1.26, 1.34, 0.94), body)
+	_add_box("FrontPlate", Vector3(0, 0.92, 0.495), Vector3(0.86, 0.72, 0.055), light)
+	_add_box("CopperBand", Vector3(0, 1.33, 0.512), Vector3(0.92, 0.12, 0.05), accent)
+	for side in [-1.0, 1.0]:
+		for z_value in [-0.34, -0.17, 0.0, 0.17, 0.34]:
+			_add_box("RadiatorFin", Vector3(float(side) * 0.72, 0.87, float(z_value)), Vector3(0.18, 0.95, 0.055), dark)
+	for x_value in [-0.38, 0.0, 0.38]:
+		_add_cylinder("Bushing", Vector3(float(x_value), 1.78, 0), 0.09, 0.55, rubber)
+		_add_torus("BushingRing", Vector3(float(x_value), 1.67, 0), 0.08, 0.13, accent)
+	_animated_part = Node3D.new()
+	_animated_part.name = "CoolingFan"
+	_animated_part.position = Vector3(0, 0.88, 0.54)
+	_visual.add_child(_animated_part)
+	for angle in [0.0, 90.0]:
+		_add_box("FanBlade", Vector3.ZERO, Vector3(0.08, 0.54, 0.04), dark, Vector3(0, 0, float(angle)), _animated_part)
+	_add_cylinder("FanHub", Vector3(0, 0, 0.03), 0.09, 0.09, accent, Vector3(90, 0, 0), _animated_part)
+
+func _build_switchgear(body: Material, light: Material, dark: Material, accent: Material) -> void:
+	_add_box("Base", Vector3(0, 0.11, 0), Vector3(1.68, 0.22, 1.08), dark)
+	_add_box("Cabinet", Vector3(0, 1.0, 0), Vector3(1.55, 1.74, 0.96), body)
+	for x_value in [-0.5, 0.0, 0.5]:
+		_add_box("BreakerDoor", Vector3(float(x_value), 1.02, 0.505), Vector3(0.44, 1.46, 0.055), light)
+		_add_box("BreakerSlot", Vector3(float(x_value), 1.12, 0.545), Vector3(0.22, 0.09, 0.035), dark)
+		_add_box("Indicator", Vector3(float(x_value), 1.5, 0.55), Vector3(0.1, 0.1, 0.04), accent)
+	_add_box("BusHousing", Vector3(0, 1.82, 0), Vector3(1.62, 0.18, 1.0), dark)
+	_add_box("SafetyStripe", Vector3(0, 0.47, 0.55), Vector3(1.34, 0.1, 0.045), accent)
+
+func _build_generator(body: Material, light: Material, dark: Material, accent: Material, rubber: Material) -> void:
+	_add_box("Base", Vector3(0, 0.12, 0), Vector3(2.0, 0.24, 1.2), dark)
+	_add_box("GeneratorHousing", Vector3(0, 0.82, 0), Vector3(1.76, 1.16, 1.04), body)
+	_add_cylinder("Stator", Vector3(0, 0.9, 0), 0.43, 1.72, light, Vector3(0, 0, 90))
+	for x_value in [-0.62, 0.0, 0.62]:
+		_add_torus("CopperCoil", Vector3(float(x_value), 0.9, 0), 0.4, 0.47, accent, Vector3(0, 0, 90))
+	_add_box("TerminalBox", Vector3(0.5, 1.45, 0), Vector3(0.62, 0.34, 0.62), dark)
+	_add_box("TerminalFace", Vector3(0.5, 1.45, 0.335), Vector3(0.42, 0.16, 0.055), accent)
+	_animated_part = Node3D.new()
+	_animated_part.name = "Rotor"
+	_animated_part.position = Vector3(-0.9, 0.9, 0)
+	_visual.add_child(_animated_part)
+	_add_cylinder("RotorHub", Vector3.ZERO, 0.2, 0.16, rubber, Vector3(0, 0, 90), _animated_part)
+	for angle in [0.0, 90.0]:
+		_add_box("RotorSpoke", Vector3.ZERO, Vector3(0.08, 0.72, 0.08), accent, Vector3(float(angle), 0, 0), _animated_part)
 
 func _build_damage_details() -> void:
 	_damage_details = Node3D.new()
@@ -312,6 +372,12 @@ func _collision_size_for_type() -> Vector3:
 			return Vector3(2.08, 1.58, 1.15)
 		EquipmentType.COLD_STORAGE:
 			return Vector3(1.62, 1.95, 1.18)
+		EquipmentType.TRANSFORMER:
+			return Vector3(1.72, 2.08, 1.25)
+		EquipmentType.SWITCHGEAR:
+			return Vector3(1.68, 1.95, 1.08)
+		EquipmentType.GENERATOR:
+			return Vector3(2.0, 1.7, 1.2)
 		_:
 			return Vector3(1.65, 1.82, 1.2)
 

@@ -3,14 +3,16 @@ extends Node3D
 @onready var world_environment: WorldEnvironment = $WorldEnvironment
 @onready var player: PlayerController = $Player
 @onready var market_service: MarketService = $MarketService
-@onready var vita_facility: CompanyFacility = $VITAFacility
 @onready var market_panel: MarketPanel = $MarketPanel
 
 func _ready() -> void:
 	Engine.time_scale = 1.0
 	Input.mouse_mode = Input.MOUSE_MODE_HIDDEN
 	_setup_environment()
-	vita_facility.equipment_destroyed.connect(_on_facility_equipment_destroyed)
+	for facility_node in get_tree().get_nodes_in_group("company_facility"):
+		var facility := facility_node as CompanyFacility
+		if facility != null:
+			facility.equipment_destroyed.connect(_on_facility_equipment_destroyed)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("restart"):
@@ -27,8 +29,8 @@ func _unhandled_input(event: InputEvent) -> void:
 func _exit_tree() -> void:
 	Engine.time_scale = 1.0
 
-func _on_facility_equipment_destroyed(equipment_id: String, _destroyed_count: int, _total_count: int) -> void:
-	market_service.register_sabotage(equipment_id)
+func _on_facility_equipment_destroyed(company_id: String, equipment_id: String, _destroyed_count: int, _total_count: int) -> void:
+	market_service.register_sabotage(company_id, equipment_id)
 
 func _set_market_open(open: bool) -> void:
 	if open:

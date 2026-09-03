@@ -19,8 +19,8 @@
 - `combat/`: damageable combat targets and health/destruction behavior.
 - `weapons/` + `data/`: weapon behavior and data-driven resources.
 - `effects/`: shared combat, destruction, and lightweight procedural audio feedback.
-- `world/`: main scene, procedural arena, VITA facility, and physical equipment. World objects report facts through signals; they do not change stock prices directly.
-- `economy/`: `MarketService` is the economic source of truth; `ShortPosition` owns the pure P&L calculation.
+- `world/`: main scene, procedural arena, company facilities, and physical equipment. World objects report facts through signals; they do not change stock prices directly.
+- `economy/`: one multi-company `MarketService` is the economic source of truth; `MarketDependency` data describes explicit cross-company reactions, and `ShortPosition` owns the pure P&L calculation.
 - `ui/`: HUD and market views display state from services; UI must not calculate or own economic state.
 - Current causal boundary: `World / CompanyFacility -> Main coordinator -> Economy / MarketService -> UI`.
 - Keep these boundaries explicit and avoid circular dependencies. In particular, combat/weapons must not know about the market, and economy must not depend on the player or rendering.

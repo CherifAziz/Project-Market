@@ -5,6 +5,7 @@ extends Resource
 @export var company_id := "company"
 @export var ticker := "COMP"
 @export var display_name := "Company"
+@export var market_category := "INDUSTRIAL"
 @export var accent_color := Color("66806e")
 
 @export_group("Market")
@@ -21,10 +22,13 @@ extends Resource
 ])
 
 func price_after_sabotage(destroyed_count: int) -> float:
+	return snappedf(initial_price * sabotage_multiplier(destroyed_count), 0.01)
+
+func sabotage_multiplier(destroyed_count: int) -> float:
 	if sabotage_price_multipliers.is_empty():
-		return snappedf(initial_price, 0.01)
+		return 1.0
 	var index := clampi(destroyed_count, 0, sabotage_price_multipliers.size() - 1)
-	return snappedf(initial_price * sabotage_price_multipliers[index], 0.01)
+	return sabotage_price_multipliers[index]
 
 func message_after_sabotage(destroyed_count: int) -> String:
 	if sabotage_messages.is_empty():

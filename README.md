@@ -1,6 +1,6 @@
 # PROJECT MARKET — Combat Playground
 
-Prototype jouable : mouvement indépendant de la visée, dash et SMG automatique dans un quartier financier miniature en fin d'après-midi. La première boucle d'identité du jeu relie désormais le sabotage physique de VITA MEDICAL à son cours de marché et à une position short unique.
+Prototype jouable : mouvement indépendant de la visée, dash et SMG automatique dans un quartier financier miniature en fin d'après-midi. La boucle systémique relie désormais les installations physiques de VITA MEDICAL et ARC ENERGY à leurs cours, avec une dépendance énergétique explicite `ARC → VITA`.
 
 ## Lancer
 
@@ -18,7 +18,7 @@ Ouvrir `project.godot` avec Godot 4.7.1 puis lancer le projet (`F6`/`F5`). Le re
 
 ## Périmètre
 
-Cette version contient uniquement VITA MEDICAL, trois équipements critiques et une position `SHORT ×300`. Elle ne contient volontairement aucune simulation économique générale, gestion de cash, position longue ou progression roguelite.
+Cette version contient VITA MEDICAL et ARC ENERGY, trois équipements critiques par installation et une position `SHORT ×300` indépendante par entreprise. Saboter ARC affecte directement ARC puis légèrement VITA via sa dépendance énergétique. Elle ne contient volontairement aucune simulation générique de supply chain, gestion de cash, position longue ou progression roguelite.
 
 ## Architecture
 
@@ -26,10 +26,10 @@ Cette version contient uniquement VITA MEDICAL, trois équipements critiques et 
 - `weapons/` + `data/` : comportement de tir et réglages d’armes en ressources `.tres`
 - `combat/` : cibles, points de vie et destruction
 - `effects/` : feedback visuel, hitstop, camera shake et premiers sons procéduraux mutualisés
-- `world/` : scène principale, arène et installation VITA ; le monde émet des événements de destruction
-- `economy/` : source de vérité du prix, séquençage des réactions et calcul pur de la position short
-- `ui/` : HUD, réticule, panneau de marché et widget VITA ; aucun calcul économique dans l’UI
-- `data/` : définitions réutilisables des armes et de l’entreprise VITA
+- `world/` : scène principale, arène et installations VITA / ARC ; le monde émet des faits de destruction
+- `economy/` : registre multi-entreprise unique, séquençage des réactions et calcul pur des positions short
+- `ui/` : HUD, réticule et vues marché réutilisables par entreprise ; aucun calcul économique dans l’UI
+- `data/` : définitions réutilisables des armes, entreprises et de la dépendance explicite `ARC → VITA`
 
 ## Direction visuelle
 

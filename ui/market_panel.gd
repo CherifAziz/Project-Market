@@ -1,93 +1,75 @@
 class_name MarketPanel
 extends CanvasLayer
 
-@onready var market_header: Label = %MarketHeader
-@onready var company_name_label: Label = %CompanyName
-@onready var ticker_label: Label = %Ticker
-@onready var price_label: Label = %Price
-@onready var variation_label: Label = %Variation
-@onready var operations_label: Label = %Operations
-@onready var position_title: Label = %PositionTitle
-@onready var position_details: Label = %PositionDetails
-@onready var position_pnl: Label = %PositionPnL
-@onready var short_button: Button = %ShortButton
+const COMPANY_CARD_SCENE := preload("res://ui/market_company_card.tscn")
+
+@onready var company_list: VBoxContainer = %CompanyList
 
 var _market: MarketService
+var _cards: Dictionary = {}
 
 func _ready() -> void:
 	_market = get_tree().get_first_node_in_group("market_service") as MarketService
-	short_button.pressed.connect(_on_short_pressed)
-	if _market:
-		_market.market_updated.connect(_refresh)
-		_market.position_opened.connect(_refresh)
-	_refresh()
+	if _market != null:
+		_populate_cards()
+		_market.market_updated.connect(_on_market_updated)
+		_market.position_opened.connect(_on_position_opened)
+	_refresh_all()
 
 func open_market() -> void:
 	visible = true
-	_refresh()
-	short_button.grab_focus()
+	_refresh_all()
+	_focus_first_available_button()
 
 func close_market() -> void:
 	visible = false
-	short_button.release_focus()
+	for card_value in _cards.values():
+		var card := card_value as MarketCompanyCard
+		card.short_button.release_focus()
 
 func is_open() -> bool:
 	return visible
 
-func _on_short_pressed() -> void:
-	if _market and _market.open_short(_market.default_short_shares):
-		var audio := get_tree().get_first_node_in_group("audio_service")
-		if audio and audio.has_method("play_ui"):
-			audio.play_ui(&"market_confirm", 0.02)
+func open_short_for(company_id: String) -> bool:
+	if _market == null or not _market.open_short(company_id, _market.default_short_shares):
+		return false
+	var audio := get_tree().get_first_node_in_group("audio_service")
+	if audio != null and audio.has_method("play_ui"):
+		audio.play_ui(&"market_confirm", 0.02)
+	return true
 
-func _refresh() -> void:
-	if _market == null or _market.company == null:
-		return
-	var company := _market.company
-	var accent := company.accent_color
-	market_header.text = "MARKET  //  DETERMINISTIC PROTOTYPE"
-	company_name_label.text = company.display_name
-	ticker_label.text = company.ticker + "  /  MEDICAL MANUFACTURING"
-	price_label.text = "$%.2f" % _market.current_price
-	price_label.add_theme_color_override("font_color", accent.lightened(0.24))
-	var variation := _market.get_variation_percent()
-	variation_label.text = _signed_percent(variation)
-	variation_label.add_theme_color_override("font_color", Color("c77c60") if variation < -0.005 else Color("d6cdbb"))
-	operations_label.text = "CRITICAL SYSTEMS OFFLINE  %d / %d" % [
-		_market.destroyed_equipment_count,
-		company.sabotage_stage_count(),
-	]
+func get_company_card(company_id: String) -> MarketCompanyCard:
+	return _cards.get(company_id) as MarketCompanyCard
 
-	if _market.has_open_position():
-		position_title.text = "OPEN POSITION  //  SHORT ×%d" % _market.get_position_shares()
-		position_details.text = "ENTRY  $%.2f      CURRENT  $%.2f" % [_market.get_entry_price(), _market.current_price]
-		position_pnl.text = "UNREALIZED P&L   %s" % _format_pnl(_market.get_unrealized_pnl())
-		position_pnl.add_theme_color_override("font_color", Color("9fc49f") if _market.get_unrealized_pnl() >= 0.0 else Color("c77c60"))
-		short_button.disabled = true
-		short_button.text = "SHORT POSITION OPEN"
-	else:
-		position_title.text = "NO OPEN POSITION"
-		position_details.text = "ONE POSITION MAXIMUM IN THIS PROTOTYPE"
-		position_pnl.text = ""
-		short_button.disabled = false
-		short_button.text = "SHORT %d SHARES" % _market.default_short_shares
+func _populate_cards() -> void:
+	for child in company_list.get_children():
+		child.queue_free()
+	_cards.clear()
+	for company_id in _market.get_company_ids():
+		var card := COMPANY_CARD_SCENE.instantiate() as MarketCompanyCard
+		company_list.add_child(card)
+		card.bind(_market, company_id)
+		card.short_requested.connect(_on_short_requested)
+		_cards[company_id] = card
 
-func _signed_percent(value: float) -> String:
-	var sign := "+" if value > 0.005 else ""
-	return "%s%.2f%%" % [sign, value]
+func _on_short_requested(company_id: String) -> void:
+	open_short_for(company_id)
 
-func _format_pnl(value: float) -> String:
-	var rounded_value := int(round(value))
-	if rounded_value > 0:
-		return "+$%s" % _with_thousands(rounded_value)
-	if rounded_value < 0:
-		return "-$%s" % _with_thousands(absi(rounded_value))
-	return "$0"
+func _on_market_updated(company_id: String) -> void:
+	var card := get_company_card(company_id)
+	if card != null:
+		card.refresh()
 
-func _with_thousands(value: int) -> String:
-	var digits := str(value)
-	var result := ""
-	while digits.length() > 3:
-		result = "," + digits.right(3) + result
-		digits = digits.left(digits.length() - 3)
-	return digits + result
+func _on_position_opened(company_id: String) -> void:
+	_on_market_updated(company_id)
+
+func _refresh_all() -> void:
+	for card_value in _cards.values():
+		(card_value as MarketCompanyCard).refresh()
+
+func _focus_first_available_button() -> void:
+	for company_id in _market.get_company_ids():
+		var card := get_company_card(company_id)
+		if card != null and not card.short_button.disabled:
+			card.short_button.grab_focus()
+			return

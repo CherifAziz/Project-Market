@@ -168,12 +168,11 @@ func _build_urban_details() -> void:
 	_add_planter_foliage(Vector3(4.2, 0.83, 3.1), 4, 0.34)
 
 	for tree_position in [
-		Vector3(-11.5, 0, -5.4), Vector3(-11.0, 0, 5.0), Vector3(-7.0, 0, 11.2),
+		Vector3(-11.5, 0, -5.4), Vector3(-11.0, 0, 5.0),
 		Vector3(11.4, 0, -5.1), Vector3(10.7, 0, 5.2), Vector3(7.8, 0, -10.8),
 	]:
 		_add_tree(tree_position)
 
-	_add_bench(Vector3(-10.1, 0, 9.8), 0.0)
 	_add_bench(Vector3(10.2, 0, -9.3), PI)
 	_add_bench(Vector3(-8.7, 0, -10.6), PI * 0.5)
 

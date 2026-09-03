@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="MarketDependency" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/market_dependency.gd" id="1_dependency"]
+
+[resource]
+script = ExtResource("1_dependency")
+dependency_id = "arc_powers_vita"
+source_company_id = "arc_energy"
+target_company_id = "vita_medical"
+source_stage_price_multipliers = PackedFloat32Array(1, 0.9761905, 0.9404762, 0.9047619)
+disruption_messages = PackedStringArray("VITA // POWER SUPPLY DISRUPTION", "VITA // BACKUP POWER UNDER STRAIN", "VITA // ENERGY INPUT CRITICAL")
+reaction_delay = 0.32
+price_transition_duration = 0.62

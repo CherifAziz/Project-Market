@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="CompanyDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/company_definition.gd" id="1_company"]
+
+[resource]
+script = ExtResource("1_company")
+company_id = "arc_energy"
+ticker = "ARC"
+display_name = "ARC ENERGY"
+market_category = "ENERGY INFRASTRUCTURE"
+accent_color = Color(0.603922, 0.407843, 0.219608, 1)
+initial_price = 64.0
+sabotage_price_multipliers = PackedFloat32Array(1, 0.875, 0.71875, 0.546875)
+reaction_delay = 0.24
+price_transition_duration = 0.72
+sabotage_messages = PackedStringArray("ARC TRANSFORMER OFFLINE", "ARC DISTRIBUTION FAILURE", "ARC GENERATION OUTAGE")

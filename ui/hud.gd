@@ -50,7 +50,7 @@ func _update_equipment_context(delta: float) -> void:
 	_focused_equipment = equipment
 	equipment_context.visible = true
 	equipment_context.modulate.a = move_toward(equipment_context.modulate.a, 1.0, delta * 10.0)
-	equipment_name_label.text = "VITA  //  " + equipment.display_name
+	equipment_name_label.text = "%s  //  %s" % [equipment.owner_ticker, equipment.display_name]
 	equipment_status_label.text = equipment.get_status_text()
 	var context_color := equipment.get_context_color()
 	equipment_status_label.add_theme_color_override("font_color", context_color)
@@ -81,7 +81,7 @@ func _find_context_equipment() -> DestructibleEquipment:
 		return null
 	var nearest: DestructibleEquipment
 	var nearest_distance := EQUIPMENT_PROXIMITY
-	for node in get_tree().get_nodes_in_group("vita_equipment"):
+	for node in get_tree().get_nodes_in_group("company_equipment"):
 		var equipment := node as DestructibleEquipment
 		if equipment == null or not equipment.is_context_relevant():
 			continue

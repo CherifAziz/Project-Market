@@ -21,19 +21,28 @@ func _run() -> void:
 
 	var player := get_first_node_in_group("player") as PlayerController
 	var targets := get_nodes_in_group("targets")
-	var vita_equipment := get_nodes_in_group("vita_equipment")
+	var company_equipment := get_nodes_in_group("company_equipment")
+	var vita_equipment := company_equipment.filter(func(machine: DestructibleEquipment) -> bool: return machine.owner_company_id == "vita_medical")
+	var arc_equipment := company_equipment.filter(func(machine: DestructibleEquipment) -> bool: return machine.owner_company_id == "arc_energy")
 	var audio := get_first_node_in_group("audio_service")
 	_check(player != null, "player scene is present")
 	_check(targets.size() == 11, "all eleven targets spawn")
 	_check(vita_equipment.size() == 3, "VITA adds exactly three separate critical machines")
+	_check(arc_equipment.size() == 3, "ARC adds exactly three separate grid assets")
+	_check(company_equipment.size() == 6, "the shared equipment pipeline registers both facilities")
 	_check(audio != null and audio.has_method("play_world") and audio.has_method("play_ui"), "reusable audio service is present")
 	if audio:
 		var required_cues := [&"smg", &"metal_impact", &"machine_damaged", &"machine_destroyed", &"market_confirm", &"market_drop", &"profit_tick", &"profit_final"]
 		_check(required_cues.all(func(cue: StringName) -> bool: return audio.has_cue(cue)), "all first-pass audio cues are generated")
-	if not vita_equipment.is_empty():
-		var first_equipment := vita_equipment[0] as DestructibleEquipment
-		_check(first_equipment.find_children("*", "Label3D", true, false).is_empty(), "machines no longer carry permanent world-space labels")
+	if not company_equipment.is_empty():
+		_check(company_equipment.all(func(machine: DestructibleEquipment) -> bool: return machine.find_children("*", "Label3D", true, false).is_empty()), "all machines use contextual UI instead of permanent labels")
 	_check(main.has_node("HUD/EquipmentContext"), "HUD owns one contextual equipment identifier")
+	var market := get_first_node_in_group("market_service") as MarketService
+	var market_panel := main.get_node("MarketPanel") as MarketPanel
+	var market_hud := main.get_node("MarketHUD") as MarketHUD
+	_check(market != null and market.get_company_ids().size() == 2, "one market service owns both companies")
+	_check(market_panel.get_company_card("vita_medical") != null and market_panel.get_company_card("arc_energy") != null, "market panel creates one reusable card per company")
+	_check(market_hud.get_company_row("vita_medical") != null and market_hud.get_company_row("arc_energy") != null, "gameplay HUD creates one reusable live row per company")
 	if player == null or targets.is_empty():
 		quit(1)
 		return

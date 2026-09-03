@@ -7,6 +7,7 @@ script = ExtResource("1_company")
 company_id = "vita_medical"
 ticker = "VITA"
 display_name = "VITA MEDICAL"
+market_category = "MEDICAL MANUFACTURING"
 accent_color = Color(0.376471, 0.501961, 0.427451, 1)
 initial_price = 42.0
 sabotage_price_multipliers = PackedFloat32Array(1, 0.9047619, 0.76190476, 0.64285713)
