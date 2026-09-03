@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://ui/hud.gd" id="1_hud"]
 [ext_resource type="Script" path="res://ui/crosshair.gd" id="2_crosshair"]
@@ -21,6 +21,34 @@ corner_radius_bottom_left = 2
 
 [sub_resource type="StyleBoxFlat" id="Style_dash_fill"]
 bg_color = Color(0.39, 0.57, 0.56, 0.94)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="Style_context"]
+bg_color = Color(0.085, 0.1, 0.095, 0.92)
+border_width_left = 2
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.4, 0.5, 0.43, 0.78)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+shadow_color = Color(0.025, 0.03, 0.028, 0.5)
+shadow_size = 6
+
+[sub_resource type="StyleBoxFlat" id="Style_context_hp_back"]
+bg_color = Color(0.055, 0.065, 0.062, 0.95)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="Style_context_hp_fill"]
+bg_color = Color(0.39, 0.55, 0.45, 0.95)
 corner_radius_top_left = 2
 corner_radius_top_right = 2
 corner_radius_bottom_right = 2
@@ -160,6 +188,71 @@ custom_minimum_size = Vector2(250, 5)
 layout_mode = 2
 theme_override_styles/background = SubResource("Style_dash_back")
 theme_override_styles/fill = SubResource("Style_dash_fill")
+value = 100.0
+show_percentage = false
+
+[node name="EquipmentContext" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(270, 76)
+offset_right = 270.0
+offset_bottom = 76.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("Style_context")
+
+[node name="Margin" type="MarginContainer" parent="EquipmentContext"]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 9
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 9
+
+[node name="VBox" type="VBoxContainer" parent="EquipmentContext/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="IdentityRow" type="HBoxContainer" parent="EquipmentContext/Margin/VBox"]
+layout_mode = 2
+
+[node name="EquipmentName" type="Label" parent="EquipmentContext/Margin/VBox/IdentityRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.92, 0.9, 0.84, 1)
+theme_override_font_sizes/font_size = 11
+text = "VITA  //  FILTRATION UNIT"
+
+[node name="EquipmentStatus" type="Label" parent="EquipmentContext/Margin/VBox/IdentityRow"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.58, 0.72, 0.61, 1)
+theme_override_font_sizes/font_size = 10
+text = "NOMINAL"
+horizontal_alignment = 2
+
+[node name="IntegrityRow" type="HBoxContainer" parent="EquipmentContext/Margin/VBox"]
+layout_mode = 2
+
+[node name="IntegrityTitle" type="Label" parent="EquipmentContext/Margin/VBox/IntegrityRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.58, 0.6, 0.56, 1)
+theme_override_font_sizes/font_size = 9
+text = "SYSTEM INTEGRITY"
+
+[node name="EquipmentIntegrity" type="Label" parent="EquipmentContext/Margin/VBox/IntegrityRow"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.76, 0.75, 0.69, 1)
+theme_override_font_sizes/font_size = 9
+text = "100%"
+
+[node name="EquipmentHealthBar" type="ProgressBar" parent="EquipmentContext/Margin/VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 5)
+layout_mode = 2
+theme_override_styles/background = SubResource("Style_context_hp_back")
+theme_override_styles/fill = SubResource("Style_context_hp_fill")
 value = 100.0
 show_percentage = false
 

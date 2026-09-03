@@ -35,8 +35,10 @@ func is_open() -> bool:
 	return visible
 
 func _on_short_pressed() -> void:
-	if _market:
-		_market.open_short(_market.default_short_shares)
+	if _market and _market.open_short(_market.default_short_shares):
+		var audio := get_tree().get_first_node_in_group("audio_service")
+		if audio and audio.has_method("play_ui"):
+			audio.play_ui(&"market_confirm", 0.02)
 
 func _refresh() -> void:
 	if _market == null or _market.company == null:

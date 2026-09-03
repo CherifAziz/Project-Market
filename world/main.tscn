@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3]
+[gd_scene load_steps=13 format=3]
 
 [ext_resource type="Script" path="res://world/main.gd" id="1_main"]
 [ext_resource type="Script" path="res://world/arena_builder.gd" id="2_arena"]
@@ -11,6 +11,7 @@
 [ext_resource type="PackedScene" path="res://world/company_facility.tscn" id="9_facility"]
 [ext_resource type="PackedScene" path="res://ui/market_panel.tscn" id="10_market_panel"]
 [ext_resource type="PackedScene" path="res://ui/market_hud.tscn" id="11_market_hud"]
+[ext_resource type="Script" path="res://effects/audio_service.gd" id="12_audio"]
 
 [node name="Main" type="Node3D"]
 script = ExtResource("1_main")
@@ -44,6 +45,9 @@ company = ExtResource("8_vita")
 
 [node name="Effects" type="Node3D" parent="."]
 script = ExtResource("3_effects")
+
+[node name="Audio" type="Node" parent="."]
+script = ExtResource("12_audio")
 
 [node name="Player" parent="." instance=ExtResource("4_player")]
 position = Vector3(0, 0.7, 4.0)

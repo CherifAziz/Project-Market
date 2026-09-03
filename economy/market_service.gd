@@ -4,6 +4,7 @@ extends Node
 signal market_updated
 signal position_opened
 signal operational_event(message: String, destroyed_count: int, total_count: int)
+signal price_reaction_started(destroyed_count: int, target_price: float)
 signal sabotage_resolved(destroyed_count: int, current_price: float, unrealized_pnl: float)
 
 @export var company: CompanyDefinition
@@ -79,6 +80,7 @@ func _process_reaction_queue() -> void:
 		await get_tree().create_timer(company.reaction_delay, true, false, true).timeout
 
 		var target_price: float = reaction["target_price"]
+		price_reaction_started.emit(stage, target_price)
 		_price_tween = create_tween().set_ignore_time_scale(true)
 		_price_tween.tween_method(_set_current_price, current_price, target_price, company.price_transition_duration).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
 		await _price_tween.finished

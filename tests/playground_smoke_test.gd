@@ -22,9 +22,18 @@ func _run() -> void:
 	var player := get_first_node_in_group("player") as PlayerController
 	var targets := get_nodes_in_group("targets")
 	var vita_equipment := get_nodes_in_group("vita_equipment")
+	var audio := get_first_node_in_group("audio_service")
 	_check(player != null, "player scene is present")
 	_check(targets.size() == 11, "all eleven targets spawn")
 	_check(vita_equipment.size() == 3, "VITA adds exactly three separate critical machines")
+	_check(audio != null and audio.has_method("play_world") and audio.has_method("play_ui"), "reusable audio service is present")
+	if audio:
+		var required_cues := [&"smg", &"metal_impact", &"machine_damaged", &"machine_destroyed", &"market_confirm", &"market_drop", &"profit_tick", &"profit_final"]
+		_check(required_cues.all(func(cue: StringName) -> bool: return audio.has_cue(cue)), "all first-pass audio cues are generated")
+	if not vita_equipment.is_empty():
+		var first_equipment := vita_equipment[0] as DestructibleEquipment
+		_check(first_equipment.find_children("*", "Label3D", true, false).is_empty(), "machines no longer carry permanent world-space labels")
+	_check(main.has_node("HUD/EquipmentContext"), "HUD owns one contextual equipment identifier")
 	if player == null or targets.is_empty():
 		quit(1)
 		return
@@ -63,5 +72,8 @@ func _run() -> void:
 	_check(not target.is_in_group("targets"), "three shots kill and remove a target from the active set")
 
 	await create_timer(0.1, true, false, true).timeout
+	main.queue_free()
+	await process_frame
+	await process_frame
 	print("Smoke test complete.")
 	quit(1 if _failed else 0)

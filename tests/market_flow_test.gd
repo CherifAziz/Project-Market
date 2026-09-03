@@ -42,7 +42,9 @@ func _run_scenario_a() -> void:
 	var expected_pnl := [1200.0, 3000.0, 4500.0]
 	for index in range(equipment.size()):
 		var machine := equipment[index] as DestructibleEquipment
-		machine.take_damage(machine.max_health, machine.global_position + Vector3.UP, Vector3.UP, Vector3.FORWARD)
+		machine.take_damage(machine.max_health * 0.5, machine.global_position + Vector3.UP, Vector3.UP, Vector3.FORWARD)
+		_check(machine.operational_state == DestructibleEquipment.OperationalState.DAMAGED and not machine.is_destroyed(), "scenario A: machine %d exposes a real DAMAGED state" % (index + 1))
+		machine.take_damage(machine.health, machine.global_position + Vector3.UP, Vector3.UP, Vector3.FORWARD)
 		await market.sabotage_resolved
 		_check(machine.is_destroyed(), "scenario A: machine %d enters its destroyed state" % (index + 1))
 		_check(is_equal_approx(market.current_price, expected_prices[index]), "scenario A: world event moves VITA to stage %d" % (index + 1))
@@ -50,6 +52,7 @@ func _run_scenario_a() -> void:
 	_check(is_equal_approx(market.get_unrealized_pnl(), 4500.0), "scenario A: final short profit is +$4,500")
 	var market_hud := main.get_node("MarketHUD") as MarketHUD
 	_check(market_hud.price_label.text == "$27.00", "scenario A: gameplay HUD displays the final live price")
+	_check(market_hud.variation_label.text == "-35.71%", "scenario A: gameplay HUD displays the final percentage variation")
 	_check("4,500" in market_hud.pnl_label.text, "scenario A: gameplay HUD displays the calculated final P&L")
 	await _remove_main(main)
 
@@ -76,7 +79,7 @@ func _run_scenario_c() -> void:
 	_check(not market.has_open_position(), "scenario C: fresh scene resets the short")
 	_check(is_equal_approx(market.get_unrealized_pnl(), 0.0), "scenario C: fresh scene resets P&L")
 	_check(facility.destroyed_count == 0, "scenario C: fresh scene resets sabotage events")
-	_check(facility.get_equipment().all(func(machine: DestructibleEquipment) -> bool: return not machine.is_destroyed() and is_equal_approx(machine.health, machine.max_health)), "scenario C: all three machines return at full health")
+	_check(facility.get_equipment().all(func(machine: DestructibleEquipment) -> bool: return not machine.is_destroyed() and machine.operational_state == DestructibleEquipment.OperationalState.NOMINAL and is_equal_approx(machine.health, machine.max_health)), "scenario C: all three machines return nominal and at full health")
 	_check(market_hud.price_label.text == "$42.00" and not market_hud.position_label.visible, "scenario C: HUD returns to its initial state")
 	main._set_market_open(true)
 	_check(not player.is_gameplay_input_enabled(), "market panel disables combat input")

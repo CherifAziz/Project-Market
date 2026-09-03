@@ -51,6 +51,12 @@ func _fire() -> void:
 			effects.spawn_impact(hit_position, hit_normal, data.tracer_color)
 		effects.add_camera_shake(data.camera_shake)
 
+	var audio := get_tree().get_first_node_in_group("audio_service")
+	if audio and audio.has_method("play_world"):
+		audio.play_world(&"smg", origin, 0.045)
+		if not result.is_empty():
+			audio.play_world(&"metal_impact", hit_position, 0.08)
+
 	_play_recoil()
 	fired.emit()
 

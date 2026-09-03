@@ -25,7 +25,7 @@ Cette version contient uniquement VITA MEDICAL, trois équipements critiques et 
 - `player/` : locomotion, visée, dash et caméra de suivi
 - `weapons/` + `data/` : comportement de tir et réglages d’armes en ressources `.tres`
 - `combat/` : cibles, points de vie et destruction
-- `effects/` : feedback visuel, hitstop et camera shake
+- `effects/` : feedback visuel, hitstop, camera shake et premiers sons procéduraux mutualisés
 - `world/` : scène principale, arène et installation VITA ; le monde émet des événements de destruction
 - `economy/` : source de vérité du prix, séquençage des réactions et calcul pur de la position short
 - `ui/` : HUD, réticule, panneau de marché et widget VITA ; aucun calcul économique dans l’UI

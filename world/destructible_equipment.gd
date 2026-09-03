@@ -2,6 +2,7 @@ class_name DestructibleEquipment
 extends StaticBody3D
 
 signal destroyed(equipment_id: String, equipment: DestructibleEquipment)
+signal state_changed(equipment: DestructibleEquipment)
 
 enum EquipmentType {
 	FILTRATION,
@@ -9,20 +10,30 @@ enum EquipmentType {
 	COLD_STORAGE,
 }
 
+enum OperationalState {
+	NOMINAL,
+	DAMAGED,
+	OFFLINE,
+}
+
 @export var equipment_id := "equipment"
 @export var display_name := "CRITICAL EQUIPMENT"
 @export var owner_company_id := "company"
 @export var equipment_type: EquipmentType = EquipmentType.FILTRATION
 @export var max_health := 96.0
+@export_range(0.1, 0.9, 0.05) var damaged_health_ratio := 0.55
 @export var accent_color := Color("60806d")
 
 var health := 0.0
+var operational_state: OperationalState = OperationalState.NOMINAL
 var _destroyed := false
+var _offline_since_msec := -1
 var _visual: Node3D
 var _collision_shape: CollisionShape3D
-var _hp_fill: MeshInstance3D
-var _status_label: Label3D
 var _animated_part: Node3D
+var _damage_details: Node3D
+var _damage_smoke: GPUParticles3D
+var _warning_material: StandardMaterial3D
 var _flash_tween: Tween
 var _destruction_tween: Tween
 var _flash_materials: Array[Dictionary] = []
@@ -34,25 +45,27 @@ func _ready() -> void:
 	health = max_health
 	_build_visual()
 	_prepare_flash_materials()
-	_update_health_bar()
 
 func _process(delta: float) -> void:
-	if _destroyed or _animated_part == null:
-		return
-	match equipment_type:
-		EquipmentType.FILTRATION:
-			_animated_part.rotation.y += delta * 0.42
-		EquipmentType.PRODUCTION:
-			_animated_part.rotation.x += delta * 1.3
-		EquipmentType.COLD_STORAGE:
-			_animated_part.rotation.z -= delta * 1.8
+	if not _destroyed and _animated_part:
+		match equipment_type:
+			EquipmentType.FILTRATION:
+				_animated_part.rotation.y += delta * 0.42
+			EquipmentType.PRODUCTION:
+				_animated_part.rotation.x += delta * 1.3
+			EquipmentType.COLD_STORAGE:
+				_animated_part.rotation.z -= delta * 1.8
+	if operational_state == OperationalState.DAMAGED and _warning_material:
+		var pulse := 0.45 + maxf(sin(Time.get_ticks_msec() * 0.009), 0.0) * 0.75
+		_warning_material.emission_energy_multiplier = pulse
 
 func take_damage(amount: float, hit_position: Vector3, _hit_normal: Vector3, _shot_direction: Vector3) -> void:
 	if _destroyed:
 		return
 	health = maxf(health - amount, 0.0)
+	if health > 0.0 and operational_state == OperationalState.NOMINAL and get_health_ratio() <= damaged_health_ratio:
+		_enter_damaged_state()
 	_flash()
-	_update_health_bar()
 
 	var effects := get_tree().get_first_node_in_group("effects")
 	if effects:
@@ -64,11 +77,61 @@ func take_damage(amount: float, hit_position: Vector3, _hit_normal: Vector3, _sh
 func is_destroyed() -> bool:
 	return _destroyed
 
+func get_health_ratio() -> float:
+	return clampf(health / maxf(max_health, 0.001), 0.0, 1.0)
+
+func get_status_text() -> String:
+	match operational_state:
+		OperationalState.DAMAGED:
+			return "DAMAGED"
+		OperationalState.OFFLINE:
+			return "OFFLINE"
+		_:
+			return "NOMINAL"
+
+func get_context_color() -> Color:
+	match operational_state:
+		OperationalState.DAMAGED:
+			return Color("d39a63")
+		OperationalState.OFFLINE:
+			return Color("c77c60")
+		_:
+			return accent_color.lightened(0.2)
+
+func get_context_world_position() -> Vector3:
+	return global_position + Vector3.UP * (_collision_size_for_type().y + 0.45)
+
+func is_context_relevant() -> bool:
+	return operational_state != OperationalState.OFFLINE or Time.get_ticks_msec() - _offline_since_msec < 650
+
+func _enter_damaged_state() -> void:
+	operational_state = OperationalState.DAMAGED
+	_damage_details.visible = true
+	_damage_smoke.emitting = true
+	for entry in _flash_materials:
+		var material: StandardMaterial3D = entry["material"]
+		var damaged_color: Color = (entry["albedo"] as Color).darkened(0.16)
+		entry["target_albedo"] = damaged_color
+		material.albedo_color = damaged_color
+	_warning_material.albedo_color = Color("d39458")
+	_warning_material.emission = Color("d39458")
+	_warning_material.emission_energy_multiplier = 0.7
+	state_changed.emit(self)
+	var audio := get_tree().get_first_node_in_group("audio_service")
+	if audio and audio.has_method("play_world"):
+		audio.play_world(&"machine_damaged", global_position + Vector3.UP * 0.8, 0.035)
+
 func _die() -> void:
 	_destroyed = true
+	operational_state = OperationalState.OFFLINE
+	_offline_since_msec = Time.get_ticks_msec()
 	_collision_shape.set_deferred("disabled", true)
-	_status_label.text = display_name + "  /  OFFLINE"
-	_status_label.modulate = Color("c98265")
+	_damage_details.visible = true
+	_damage_smoke.emitting = false
+	_warning_material.albedo_color = Color("3b3e3b")
+	_warning_material.emission = Color.BLACK
+	_warning_material.emission_energy_multiplier = 0.0
+	state_changed.emit(self)
 	destroyed.emit(equipment_id, self)
 
 	if _flash_tween and _flash_tween.is_valid():
@@ -79,6 +142,10 @@ func _die() -> void:
 		material.albedo_color = original.darkened(0.42)
 		material.emission = Color.BLACK
 		material.emission_energy_multiplier = 0.0
+
+	var audio := get_tree().get_first_node_in_group("audio_service")
+	if audio and audio.has_method("play_world"):
+		audio.play_world(&"machine_destroyed", global_position + Vector3.UP * 0.7, 0.03)
 
 	var effects := get_tree().get_first_node_in_group("effects")
 	if effects:
@@ -117,7 +184,7 @@ func _build_visual() -> void:
 	_collision_shape.position = Vector3.UP * shape.size.y * 0.5
 	add_child(_collision_shape)
 
-	_build_health_display(dark_material, accent_material)
+	_build_damage_details()
 
 func _build_filtration(body: Material, light: Material, dark: Material, accent: Material) -> void:
 	_add_box("Base", Vector3(0, 0.12, 0), Vector3(1.65, 0.24, 1.2), dark)
@@ -165,29 +232,50 @@ func _build_cold_storage(body: Material, light: Material, dark: Material, accent
 		_add_box("FanBlade", Vector3.ZERO, Vector3(0.08, 0.66, 0.045), dark, Vector3(0, 0, float(angle)), _animated_part)
 	_add_cylinder("FanHub", Vector3(0, 0, -0.035), 0.11, 0.1, accent, Vector3(90, 0, 0), _animated_part)
 
-func _build_health_display(dark_material: Material, accent_material: Material) -> void:
-	_status_label = Label3D.new()
-	_status_label.name = "StatusLabel"
-	_status_label.text = display_name
-	_status_label.position = Vector3(0, 2.3, 0)
-	_status_label.font_size = 40
-	_status_label.pixel_size = 0.0055
-	_status_label.modulate = Color("eee8dc")
-	_status_label.outline_modulate = Color(0.08, 0.1, 0.1, 0.9)
-	_status_label.outline_size = 9
-	_status_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	_status_label.no_depth_test = true
-	_visual.add_child(_status_label)
+func _build_damage_details() -> void:
+	_damage_details = Node3D.new()
+	_damage_details.name = "DamageDetails"
+	_damage_details.visible = false
+	_visual.add_child(_damage_details)
+	var size := _collision_size_for_type()
+	var front_z := size.z * 0.5 + 0.035
+	var scorch := _make_material(Color("3b3732"), 0.12, 0.9)
+	_warning_material = _make_material(Color("d39458"), 0.05, 0.58)
+	_warning_material.emission = Color("d39458")
+	_add_box("ScorchedPanel", Vector3(size.x * 0.19, minf(size.y * 0.68, 1.25), front_z), Vector3(0.46, 0.34, 0.045), scorch, Vector3(0, 0, -8), _damage_details)
+	_add_box("WarningLamp", Vector3(-size.x * 0.28, minf(size.y * 0.77, 1.52), front_z + 0.018), Vector3(0.12, 0.12, 0.06), _warning_material, Vector3.ZERO, _damage_details)
 
-	_add_box("HPBack", Vector3(0, 2.08, 0.04), Vector3(1.12, 0.07, 0.055), dark_material)
-	_hp_fill = _add_box("HPFill", Vector3(0, 2.08, 0), Vector3(1.02, 0.035, 0.06), accent_material)
-
-func _update_health_bar() -> void:
-	if _hp_fill == null:
-		return
-	var ratio := clampf(health / max_health, 0.0, 1.0)
-	_hp_fill.scale.x = ratio
-	_hp_fill.position.x = (ratio - 1.0) * 0.51
+	_damage_smoke = GPUParticles3D.new()
+	_damage_smoke.name = "DamageSmoke"
+	_damage_smoke.emitting = false
+	_damage_smoke.amount = 4
+	_damage_smoke.lifetime = 1.35
+	_damage_smoke.randomness = 0.85
+	_damage_smoke.visibility_aabb = AABB(Vector3(-1, -0.5, -1), Vector3(2, 3, 2))
+	var process := ParticleProcessMaterial.new()
+	process.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_SPHERE
+	process.emission_sphere_radius = 0.12
+	process.direction = Vector3.UP
+	process.spread = 24.0
+	process.initial_velocity_min = 0.16
+	process.initial_velocity_max = 0.42
+	process.gravity = Vector3(0, 0.3, 0)
+	process.scale_min = 0.6
+	process.scale_max = 1.1
+	process.color = Color(0.24, 0.23, 0.21, 0.38)
+	_damage_smoke.process_material = process
+	var smoke_mesh := SphereMesh.new()
+	smoke_mesh.radius = 0.12
+	smoke_mesh.height = 0.24
+	smoke_mesh.radial_segments = 6
+	smoke_mesh.rings = 3
+	var smoke_material := _make_material(Color(0.25, 0.24, 0.22, 0.34), 0.0, 1.0)
+	smoke_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	smoke_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	smoke_mesh.material = smoke_material
+	_damage_smoke.draw_pass_1 = smoke_mesh
+	_damage_smoke.position = Vector3(size.x * 0.18, size.y * 0.78, 0)
+	_damage_details.add_child(_damage_smoke)
 
 func _flash() -> void:
 	if _flash_tween and _flash_tween.is_valid():
@@ -198,7 +286,7 @@ func _flash() -> void:
 		material.albedo_color = Color.WHITE
 		material.emission = Color.WHITE
 		material.emission_energy_multiplier = 1.8
-		_flash_tween.tween_property(material, "albedo_color", entry["albedo"], 0.13)
+		_flash_tween.tween_property(material, "albedo_color", entry["target_albedo"], 0.13)
 		_flash_tween.tween_property(material, "emission", entry["emission"], 0.15)
 		_flash_tween.tween_property(material, "emission_energy_multiplier", entry["energy"], 0.16)
 
@@ -213,6 +301,7 @@ func _prepare_flash_materials() -> void:
 			_flash_materials.append({
 				"material": material,
 				"albedo": material.albedo_color,
+				"target_albedo": material.albedo_color,
 				"emission": material.emission,
 				"energy": material.emission_energy_multiplier,
 			})

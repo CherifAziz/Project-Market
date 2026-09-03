@@ -65,12 +65,17 @@ func _build_facility_shell() -> void:
 	var dark_metal := _make_material(Color("3b4545"), 0.28, 0.52)
 	var accent_color := company.accent_color if company else Color("60806d")
 	var accent := _make_material(accent_color, 0.05, 0.68)
+	var bay_marking := _make_material(accent_color.darkened(0.08), 0.0, 0.88)
 	var pallet := _make_material(Color("896c4e"), 0.0, 0.88)
 
 	# A compact loading court sits in front of an existing north-side building.
 	_add_box("LogisticsCourt", Vector3(1.0, 0.035, 0.72), Vector3(7.2, 0.07, 3.15), light_stone)
 	_add_box("LoadingDock", Vector3(1.0, 0.17, -0.82), Vector3(6.4, 0.28, 0.78), stone)
 	_add_box("DockEdge", Vector3(1.0, 0.34, -0.42), Vector3(6.4, 0.1, 0.08), accent)
+	for bay_x in [-0.5, 1.55, 3.65]:
+		_add_box("EquipmentBaySide", Vector3(float(bay_x) - 0.88, 0.078, 0.32), Vector3(0.035, 0.016, 1.5), bay_marking)
+		_add_box("EquipmentBaySide", Vector3(float(bay_x) + 0.88, 0.078, 0.32), Vector3(0.035, 0.016, 1.5), bay_marking)
+		_add_box("EquipmentBayFront", Vector3(float(bay_x), 0.078, 1.06), Vector3(1.76, 0.016, 0.035), bay_marking)
 
 	# The low walls frame the facility without hiding its three critical machines.
 	_add_solid("WestBarrier", Vector3(-2.55, 0.28, 0.82), Vector3(0.18, 0.56, 2.85), stone)

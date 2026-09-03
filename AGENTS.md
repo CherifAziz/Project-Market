@@ -18,7 +18,7 @@
 - `player/`: movement, mouse aim, dash, and follow camera.
 - `combat/`: damageable combat targets and health/destruction behavior.
 - `weapons/` + `data/`: weapon behavior and data-driven resources.
-- `effects/`: shared combat and destruction feedback.
+- `effects/`: shared combat, destruction, and lightweight procedural audio feedback.
 - `world/`: main scene, procedural arena, VITA facility, and physical equipment. World objects report facts through signals; they do not change stock prices directly.
 - `economy/`: `MarketService` is the economic source of truth; `ShortPosition` owns the pure P&L calculation.
 - `ui/`: HUD and market views display state from services; UI must not calculate or own economic state.
