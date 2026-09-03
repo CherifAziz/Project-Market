@@ -54,33 +54,52 @@ func _run() -> void:
 	barrier.global_position = module.global_position + Vector3(0, 0.8, 0.42)
 	await _frames(2)
 	_check(not interactor.can_reach(module), "loot interaction does not reach through solid geometry")
-	player.aim_direction = Vector3.FORWARD
-	var drop_position := interactor.get_drop_position()
-	var drop_path := PhysicsRayQueryParameters3D.create(player.global_position + Vector3.UP * 0.5, drop_position + Vector3.UP * 0.5, 3)
-	_check(drop_position.is_finite() and player.get_world_3d().direct_space_state.intersect_ray(drop_path).is_empty(), "drop searches reachable clear ground instead of placing cargo through a wall")
 	barrier.queue_free()
 	await _frames(3)
 	await _press_interact()
-	_check(not module.available and inventory.contains(module.loot_id) and inventory.get_used_slots() == 2, "contextual E moves the physical module into the two-slot cargo manifest")
-	_check(market.get_cash() == 10000.0 and is_equal_approx(player.get_carry_speed_multiplier(), 0.92), "carrying creates no cash and applies weight to actual player movement")
+	_check(not module.available and inventory.contains(module.loot_id) and inventory.get_used_slots() == 1, "contextual E collects module into one slot")
+	_check(market.get_cash() == 10000.0 and player.move_speed == 7.6, "cargo creates no cash or movement penalty")
 	player.global_position = copper.global_position + Vector3(0, 0.7, 0.7)
 	player.velocity = Vector3.ZERO
 	await _frames(4)
 	await _press_interact()
-	_check(inventory.get_used_slots() == 3 and inventory.get_weight() == 20.0, "bulky module plus copper fills the bag and reaches the bounded burden cap")
-	main.inventory_hud.toggle_details()
-	_check(main.inventory_hud.details.visible and director.is_security_enabled(), "inventory inspection keeps the world and security live")
-	main._drop_selected_loot()
-	await _frames(2)
-	_check(copper.available and inventory.get_used_slots() == 2 and interactor.can_reach(copper), "G-equivalent drop returns the same unique object to reachable ground")
-	main._on_loot_pickup_requested(copper)
-	_check(not copper.available and inventory.get_used_slots() == 3, "dropped cargo can be picked up again without cloning it")
-	player.global_position = prototype.global_position + Vector3(0, 0.7, 0.8)
+	_check(inventory.get_used_slots() == 2, "two objects occupy two slots")
+	var component := _pickup("power_component")
+	player.global_position = component.global_position + Vector3(0, 0.7, 0.8)
 	player.velocity = Vector3.ZERO
 	await _frames(4)
-	main._on_loot_pickup_requested(prototype)
-	_check(not prototype.available and copper.available and inventory.get_value() == 12000.0, "full-bag replacement trades copper for the VITA prototype and physically drops copper")
-	_check(inventory.get_weight() == 16.0 and is_equal_approx(player.get_carry_speed_multiplier(), 0.88), "exchanging assets updates the load without accumulating speed penalties")
+	await _press_interact()
+	_check(inventory.get_used_slots() == 3 and inventory.get_value() == 12800, "three ARC objects fill all three slots")
+	var hud := main.inventory_hud as InventoryHUD
+	_check(hud._slots.size() == 3 and director.is_security_enabled(), "three compact slots keep the world live")
+	player.global_position = prototype.global_position + Vector3(0, 0.7, 0.8)
+	player.velocity = Vector3.ZERO
+	_aim_at(player.global_position + Vector3(4, 0, 0))
+	await _frames(4)
+	await _press_interact()
+	await _press_action("cargo_2")
+	_check(prototype.available and inventory.get_value() == 12800, "full bag does not swap on E or an un-aimed number key")
+	for _frame in range(6):
+		_aim_at(prototype.global_position)
+		await _frames(1)
+	_check(interactor.focused_pickup == prototype and hud._context.text == "$4.8k  ↓" and hud._slots[0].key_number == 1 and hud._slots[2].key_number == 3, "aim exposes only price and three direct numbered slots")
+	await _press_action("cargo_2", prototype.global_position)
+	_check(not prototype.available and copper.available and inventory.get_value() == 15000, "2 directly replaces copper with prototype")
+	_check(inventory.get_items()[0]["id"] == module.loot_id and inventory.get_items()[1]["id"] == prototype.loot_id and inventory.get_items()[2]["id"] == component.loot_id, "swap leaves other slot locations unchanged")
+	_check(copper.global_position.is_equal_approx(prototype.global_position) and interactor.can_reach(copper), "old object returns to the same reachable location without duplication")
+	_aim_at(copper.global_position)
+	await _press_action("cargo_2", copper.global_position)
+	_check(inventory.contains(copper.loot_id) and prototype.available, "same swapped object is recoverable with 2")
+	_aim_at(prototype.global_position)
+	await _press_action("cargo_2", prototype.global_position)
+	_check(inventory.contains(prototype.loot_id) and copper.available, "repeated swaps preserve unique IDs and values")
+	# Cargo has no locomotion coupling: actual input still reaches baseline move speed.
+	player.global_position = Vector3(0, 0.1, 3)
+	player.velocity = Vector3.ZERO
+	Input.action_press("move_right")
+	await _wait(0.3)
+	_check(is_equal_approx(player.velocity.x, player.move_speed), "full cargo preserves actual movement speed")
+	Input.action_release("move_right")
 	player.global_position = exit_point.global_position + Vector3.UP * 0.7
 	player.velocity = Vector3.ZERO
 	exit_point.hold_duration = 0.2
@@ -89,8 +108,8 @@ func _run() -> void:
 	await _wait(0.3)
 	Input.action_release("interact")
 	await _wait(2.9)
-	_check(results.was_successful() and results.market_profit_label.text == "+$9,900" and results.loot_profit_label.text == "+$12,000" and results.profit_label.text == "+$21,900", "extraction presents trading, sold assets and combined profit separately")
-	_check(market.get_cash() == 31900.0 and inventory.get_items().is_empty() and "ARC INDUSTRIAL MODULE" in results.sold_items_label.text, "service credits $31,900 once and result lists the actual sold items")
+	_check(results.was_successful() and results.market_profit_label.text == "+$9,900" and results.loot_profit_label.text == "+$15,000" and results.profit_label.text == "+$24,900", "extraction presents trading, sold assets and combined profit separately")
+	_check(market.get_cash() == 34900.0 and inventory.get_items().is_empty() and "ARC INDUSTRIAL MODULE" in results.sold_items_label.text, "service credits $34,900 once and result lists the actual sold items")
 	results.restart_button.pressed.emit()
 	await _frames(5)
 	main = current_scene
@@ -98,7 +117,7 @@ func _run() -> void:
 	inventory = main.get_node("RunInventory") as RunInventory
 	market = main.get_node("MarketService") as MarketService
 	director = main.get_node("SecurityDirector") as SecurityDirector
-	_check(inventory.get_items().is_empty() and player.get_carry_speed_multiplier() == 1.0 and get_nodes_in_group("loot_pickups").all(func(item: LootPickup) -> bool: return item.available), "restart restores all six world items, empty bag and unburdened movement")
+	_check(inventory.get_items().is_empty() and get_nodes_in_group("loot_pickups").all(func(item: LootPickup) -> bool: return item.available), "restart restores all six world items, empty bag")
 	# One bounded ranged-combat contract; full pursuit is checked in the rendered run.
 	for agent in get_nodes_in_group("security_agents"):
 		agent.set_physics_process(false)
@@ -114,7 +133,7 @@ func _run() -> void:
 	main._set_market_open(false)
 	guard.set_physics_process(false)
 	var sample := _pickup("sample_case")
-	player.global_position = sample.global_position + Vector3(0, 0.7, 0.8)
+	player.global_position = sample.global_position + Vector3(-0.8, 0.7, 0.4)
 	player.velocity = Vector3.ZERO
 	await _frames(4)
 	main._on_loot_pickup_requested(sample)
@@ -148,3 +167,19 @@ func _frames(count: int) -> void:
 
 func _wait(seconds: float) -> void:
 	await create_timer(seconds, true, false, true).timeout
+
+func _press_action(action: String, aimed_at := Vector3.INF) -> void:
+	if aimed_at.is_finite():
+		_aim_at(aimed_at)
+	Input.action_press(action)
+	for _frame in range(2):
+		if aimed_at.is_finite():
+			_aim_at(aimed_at)
+		await _frames(1)
+	Input.action_release(action)
+	await _frames(2)
+
+func _aim_at(at: Vector3) -> void:
+	var motion := InputEventMouseMotion.new()
+	motion.position = root.get_camera_3d().unproject_position(at)
+	root.push_input(motion, true)

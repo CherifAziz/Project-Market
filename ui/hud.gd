@@ -86,16 +86,16 @@ func _update_extraction_hint() -> void:
 	extraction_progress.value = _extraction.get_progress() * 100.0
 	extraction_arrow.visible = available and not nearby
 	if not available:
-		extraction_label.text = "SABOTAGE  →  SURVIVE  →  EXTRACT"
+		extraction_label.text = "EXIT LOCKED"
 		extraction_detail.text = "ATTACK A COMPANY MACHINE TO UNLOCK THE EXIT"
 	elif not nearby:
-		extraction_label.text = "SERVICE EXIT  //  %d m" % int(ceil(_extraction.get_player_distance()))
+		extraction_label.text = "EXIT  ·  %d m" % int(ceil(_extraction.get_player_distance()))
 		extraction_detail.text = "REACH THE EXIT TO SECURE ALL RUN GAINS"
 	elif _extraction.is_interrupted():
-		extraction_label.text = "HIT  //  EXTRACTION INTERRUPTED"
+		extraction_label.text = "INTERRUPTED"
 		extraction_detail.text = "GET CLEAR — THEN HOLD E AGAIN"
 	else:
-		extraction_label.text = "EXTRACTING  %02d%%" % int(extraction_progress.value) if _extraction.get_progress() > 0.0 else "HOLD E  //  EXTRACT  %.1f s" % _extraction.hold_duration
+		extraction_label.text = "EXTRACTING  %02d%%" % int(extraction_progress.value) if _extraction.get_progress() > 0.0 else "[E]  HOLD TO EXTRACT"
 		extraction_detail.text = "STAY STILL — DASH OR DAMAGE INTERRUPTS"
 	var camera := get_viewport().get_camera_3d()
 	if camera != null and extraction_arrow.visible:

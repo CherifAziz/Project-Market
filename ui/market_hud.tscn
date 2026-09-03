@@ -32,9 +32,9 @@ anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
 offset_left = -334.0
-offset_top = 126.0
+offset_top = 28.0
 offset_right = -34.0
-offset_bottom = 264.0
+offset_bottom = 166.0
 grow_horizontal = 0
 theme_override_styles/panel = SubResource("Style_widget")
 
@@ -86,6 +86,7 @@ theme_override_colors/font_color = Color(0.63, 0.79, 0.61, 1)
 text = "REALIZED  $0"
 
 [node name="RiskHint" type="Label" parent="MarketWidget/Margin/VBox"]
+visible = false
 layout_mode = 2
 theme_override_font_sizes/font_size = 9
 theme_override_colors/font_color = Color(0.73, 0.66, 0.54, 1)
@@ -115,22 +116,3 @@ theme_override_font_sizes/font_size = 13
 text = "ARC  →  VITA // POWER SUPPLY DISRUPTION"
 horizontal_alignment = 1
 vertical_alignment = 1
-
-[node name="ProfitCenter" type="CenterContainer" parent="."]
-anchors_preset = 10
-anchor_right = 1.0
-offset_top = 174.0
-offset_bottom = 242.0
-grow_horizontal = 2
-mouse_filter = 2
-
-[node name="ProfitLabel" type="Label" parent="ProfitCenter"]
-unique_name_in_owner = true
-visible = false
-layout_mode = 2
-theme_override_colors/font_color = Color(0.65, 0.8, 0.65, 1)
-theme_override_colors/font_shadow_color = Color(0.06, 0.08, 0.07, 0.9)
-theme_override_constants/shadow_offset_x = 2
-theme_override_constants/shadow_offset_y = 2
-theme_override_font_sizes/font_size = 40
-text = "ARC  +$8,700"

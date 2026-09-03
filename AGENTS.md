@@ -11,23 +11,25 @@
 - Prefer the smallest clear solution that proves the requested idea. Simple before complex; no premature frameworks, simulations, or generalized event buses.
 - Implement only the requested scope. Do not add adjacent features, content, weapons, economies, or progression without an explicit request.
 - Protect the validated priorities: movement, aim, shooting, dash, responsiveness, readable feedback, and overall game feel.
+- Prioritize immediate visual comprehension: communicate through silhouettes, icons and contextual feedback. Avoid mechanics requiring explanatory text, verbose HUDs, or additional commands without necessity.
 - Preserve the calm, stylized golden-hour direction: natural/desaturated colors, mostly matte materials, strong readable silhouettes, restrained emission, and brief effects for important actions. Avoid aggressive neon, cyan/magenta styling, excessive bloom, visual noise, and photorealism.
 
 ## Existing architecture
 
-- `player/`: movement, mouse aim, dash/evasion, health, follow camera, weight-based movement cost, and proximity/LOS loot interaction. Carry weight does not change dash evasion.
+- `player/`: movement, mouse aim, dash/evasion, health, follow camera, and proximity/LOS loot interaction. Cargo never changes movement or dash.
 - `combat/`: company security agents, their lightweight patrol/LOS/ranged-combat state machine, and health/destruction behavior.
 - `weapons/` + `data/`: weapon behavior and data-driven resources.
 - `effects/`: shared combat, destruction, and lightweight procedural audio feedback.
 - `world/`: main/run coordinator, arena, company facilities/equipment, authored `LootPickup` objects, extraction point, and local `SecurityDirector`. World objects emit facts; they never change prices or cash directly.
-- `inventory/`: one three-slot `RunInventory` owns unique carried-item manifests, selection and atomic exchanges. `data/loot/` defines fixed names, values, weights, bulk and categories. No random loot, rarity or equipment system.
+- `inventory/`: one three-slot `RunInventory` owns unique manifests and atomic, slot-preserving exchanges. One object = one slot. `data/loot/` defines fixed names, values and visual identities; no weight, bulk, random loot or equipment system.
 - `economy/`: one `MarketService` owns prices, positions, run cash and settlement (market profit and loot sale kept separate); `MarketDependency` describes cross-company reactions, and `ShortPosition` owns pure P&L math.
 - `ui/`: HUD/market views display service state; `RunResults` animates a detached settled statement. UI must not calculate or own economic state.
 - Current economic boundary: `World / CompanyFacility -> Main coordinator -> Economy / MarketService -> UI`.
 - Current security boundary: `CompanyFacility equipment attack -> SecurityDirector -> matching company agents + HUD`. Keep security local to the attacked company; it must not own or mutate market state.
 - Current run boundary: `ExtractionPoint / player death -> Main -> MarketService settlement / forfeiture -> RunResults`. Extraction remains vulnerable until completion; only then stop combat.
-- Loot boundary: `LootInteractor request -> Main -> RunInventory -> HUD / player load`; only successful extraction passes the manifest to `MarketService` for sale. Dropped/replaced objects return to reachable ground; never clone their IDs.
-- Market and cargo overlays are live: guards and damage never pause while inspecting them. The market immobilizes combat controls; cargo inspection preserves movement. Only terminal run outcomes disable security.
+- Loot boundary: `LootInteractor request -> Main -> RunInventory -> HUD`; only extraction passes the manifest to `MarketService` for sale. Replaced objects return to the incoming object's reachable location; never clone IDs or reorder unaffected slots.
+- Cargo UX: three compact silhouette/value slots only. Nearby loot shows price + E; when full, aim at reachable loot and press 1/2/3 to replace that slot directly. No inspection menu, separate drop command, persistent instructions or visible categories.
+- Market and loot interactions remain live. The market immobilizes combat controls, never guards or damage. Only terminal run outcomes disable security.
 - V1 run rule: start at $10,000; opening shorts does not change cash. Closing realizes run-local P&L. Death loses all cargo and run P&L (even closed gains), cancels positions and restores starting capital. Extraction settles shorts at displayed prices and sells carried assets once. No permanent cash carryover or meta progression.
 - Keep these boundaries explicit and avoid circular dependencies. In particular, combat/weapons must not know about the market, and economy must not depend on the player or rendering.
 

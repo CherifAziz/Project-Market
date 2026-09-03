@@ -22,7 +22,6 @@ func _ready() -> void:
 	player.died.connect(_on_player_died)
 	extraction.extraction_completed.connect(_on_extraction_completed)
 	run_results.restart_requested.connect(_restart_run)
-	inventory.changed.connect(_on_inventory_changed)
 	loot_interactor.pickup_requested.connect(_on_loot_pickup_requested)
 	inventory_hud.bind(inventory, loot_interactor, player)
 	for facility_node in get_tree().get_nodes_in_group("company_facility"):
@@ -36,16 +35,6 @@ func _unhandled_input(event: InputEvent) -> void:
 		_restart_run()
 	elif event.is_action_pressed("market"):
 		_set_market_open(not market_panel.is_open())
-	elif event.is_action_pressed("inventory") and run_state == RunState.ACTIVE:
-		inventory_hud.toggle_details()
-	elif event.is_action_pressed("drop_loot"):
-		_drop_selected_loot()
-	elif event.is_action_pressed("cargo_1"):
-		inventory.select_item(0)
-	elif event.is_action_pressed("cargo_2"):
-		inventory.select_item(1)
-	elif event.is_action_pressed("cargo_3"):
-		inventory.select_item(2)
 	elif event.is_action_pressed("ui_cancel"):
 		if market_panel.is_open():
 			_set_market_open(false)
@@ -103,43 +92,21 @@ func _finish_run(success: bool, summary: Dictionary) -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	run_results.present(success, summary)
 
-func _on_inventory_changed() -> void:
-	player.set_carried_weight(inventory.get_weight())
-
-func _on_loot_pickup_requested(pickup: LootPickup) -> void:
+func _on_loot_pickup_requested(pickup: LootPickup, replace_index := -1) -> void:
 	if run_state != RunState.ACTIVE or not loot_interactor.can_reach(pickup):
 		return
-	var replace_index := -1
-	var drop_position := Vector3.INF
-	if not inventory.can_collect(pickup.definition):
-		replace_index = inventory.selected_index
-		if not inventory.can_collect(pickup.definition, replace_index):
-			inventory_hud.show_notice("NOT ENOUGH ROOM  //  SELECT 1–3, G TO DROP")
-			return
-		drop_position = loot_interactor.get_drop_position()
-		if not drop_position.is_finite():
-			inventory_hud.show_notice("NO CLEAR GROUND TO EXCHANGE")
-			return
+	if replace_index >= 0 and (not loot_interactor.is_full() or not loot_interactor.is_aiming_at(pickup)):
+		return
 	var result := inventory.collect(pickup.loot_id, pickup.definition, replace_index)
 	if not result["accepted"]:
 		return
-	pickup.collect_from_world()
+	var slot := replace_index if replace_index >= 0 else inventory.get_used_slots() - 1
+	inventory_hud.animate_pickup(pickup, slot)
+	pickup.collect_from_world(player.global_position)
 	if not result["dropped"].is_empty():
-		_place_dropped_loot(result["dropped"], drop_position)
-	inventory_hud.show_notice("CARRIED  //  %s" % pickup.definition.display_name)
+		# Exchange at the same reachable location, no separate drop action or extra rule.
+		_place_dropped_loot(result["dropped"], pickup.global_position)
 	$Audio.play_ui(&"market_confirm", 0.025, -5.0)
-
-func _drop_selected_loot() -> void:
-	if run_state != RunState.ACTIVE or not player.is_gameplay_input_enabled() or player.is_dashing() or inventory.get_selected_item().is_empty():
-		return
-	var at := loot_interactor.get_drop_position()
-	if not at.is_finite():
-		inventory_hud.show_notice("NO CLEAR GROUND TO DROP")
-		return
-	var item := inventory.drop_selected()
-	_place_dropped_loot(item, at)
-	inventory_hud.show_notice("DROPPED  //  %s" % item["name"])
-	$Audio.play_world(&"metal_impact", at, 0.0, -4.0)
 
 func _place_dropped_loot(item: Dictionary, at: Vector3) -> void:
 	for node in get_tree().get_nodes_in_group("loot_pickups"):

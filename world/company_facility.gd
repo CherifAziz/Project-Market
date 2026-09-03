@@ -32,19 +32,19 @@ func _ready() -> void:
 	_spawn_loot()
 
 func _spawn_loot() -> void:
-	# Authored service-bay placements, behind the equipment line, not at the exit.
+	# Clear silhouettes in the guarded service aisle, not hidden behind machines.
 	var specs: Array[Dictionary]
 	if facility_type == FacilityType.ENERGY:
 		specs = [
-			{"data": "arc_module", "at": Vector3(-0.85, 0.08, -0.68)},
-			{"data": "copper_spool", "at": Vector3(1.0, 0.08, -0.63)},
-			{"data": "power_component", "at": Vector3(2.72, 0.08, -0.62)},
+			{"data": "arc_module", "at": Vector3(-1.85, 0.08, 1.5)},
+			{"data": "copper_spool", "at": Vector3(0.0, 0.08, 1.5)},
+			{"data": "power_component", "at": Vector3(1.95, 0.08, 1.5)},
 		]
 	else:
 		specs = [
-			{"data": "vita_prototype", "at": Vector3(0.55, 0.08, -0.27)},
-			{"data": "lab_analyzer", "at": Vector3(2.6, 0.08, -0.29)},
-			{"data": "sample_case", "at": Vector3(-1.7, 0.08, 0.12)},
+			{"data": "vita_prototype", "at": Vector3(-0.5, 0.08, 1.7)},
+			{"data": "lab_analyzer", "at": Vector3(1.55, 0.08, 1.7)},
+			{"data": "sample_case", "at": Vector3(3.65, 0.08, 1.7)},
 		]
 	for spec in specs:
 		var pickup := LOOT_SCENE.instantiate() as LootPickup

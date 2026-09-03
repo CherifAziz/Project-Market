@@ -123,10 +123,11 @@ theme_override_colors/font_color = Color(0.96, 0.94, 0.89, 1)
 theme_override_colors/font_shadow_color = Color(0.12, 0.15, 0.15, 0.78)
 theme_override_constants/shadow_offset_x = 2
 theme_override_constants/shadow_offset_y = 2
-theme_override_font_sizes/font_size = 28
+theme_override_font_sizes/font_size = 18
 text = "PROJECT / MARKET"
 
 [node name="Subtitle" type="Label" parent="TopLeft/VBox"]
+visible = false
 layout_mode = 2
 theme_override_colors/font_color = Color(0.85, 0.8, 0.69, 0.92)
 theme_override_colors/font_shadow_color = Color(0.12, 0.15, 0.15, 0.72)
@@ -136,6 +137,7 @@ theme_override_font_sizes/font_size = 11
 text = "GOLDEN DISTRICT  //  COMBAT SANDBOX  01"
 
 [node name="TopRight" type="VBoxContainer" parent="."]
+visible = false
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
@@ -173,9 +175,9 @@ anchors_preset = 2
 anchor_top = 1.0
 anchor_bottom = 1.0
 offset_left = 34.0
-offset_top = -145.0
+offset_top = -68.0
 offset_right = 294.0
-offset_bottom = -111.0
+offset_bottom = -34.0
 grow_vertical = 0
 theme_override_constants/separation = 4
 
@@ -198,33 +200,6 @@ theme_override_styles/fill = SubResource("Style_player_hp_fill")
 value = 100.0
 show_percentage = false
 
-[node name="Controls" type="VBoxContainer" parent="."]
-anchors_preset = 2
-anchor_top = 1.0
-anchor_bottom = 1.0
-offset_left = 34.0
-offset_top = -95.0
-offset_right = 355.0
-offset_bottom = -27.0
-grow_vertical = 0
-
-[node name="Weapon" type="Label" parent="Controls"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.95, 0.93, 0.87, 0.95)
-theme_override_colors/font_shadow_color = Color(0.12, 0.15, 0.15, 0.72)
-theme_override_constants/shadow_offset_x = 1
-theme_override_constants/shadow_offset_y = 1
-theme_override_font_sizes/font_size = 14
-text = "LIQUIDATOR-9  //  AUTO"
-
-[node name="Help" type="Label" parent="Controls"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.79, 0.77, 0.7, 0.9)
-theme_override_colors/font_shadow_color = Color(0.12, 0.15, 0.15, 0.72)
-theme_override_constants/shadow_offset_x = 1
-theme_override_constants/shadow_offset_y = 1
-theme_override_font_sizes/font_size = 11
-text = "WASD / ZQSD  MOVE     LMB  FIRE     M  LIVE MARKET\nSPACE / SHIFT  DASH     E  INTERACT     TAB  CARGO     R  RESET"
 
 [node name="DashPanel" type="VBoxContainer" parent="."]
 anchors_preset = 7
@@ -366,9 +341,9 @@ anchor_left = 0.5
 anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
-offset_left = -240.0
-offset_top = -155.0
-offset_right = 240.0
+offset_left = -155.0
+offset_top = -126.0
+offset_right = 155.0
 offset_bottom = -76.0
 grow_horizontal = 2
 grow_vertical = 0
@@ -411,6 +386,7 @@ text = "SABOTAGE  →  SURVIVE  →  EXTRACT"
 horizontal_alignment = 1
 
 [node name="ExtractionDetail" type="Label" parent="ExtractionHint/Margin/HBox/VBox"]
+visible = false
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.62, 0.66, 0.56, 1)

@@ -12,9 +12,8 @@ Ouvrir `project.godot` avec Godot 4.7.1 puis lancer le projet avec `F5`. Le rend
 - Souris : visée
 - Clic gauche maintenu : tir automatique
 - `Espace` ou `Maj` : dash
-- `E` près d'un objet : ramasser ; si le sac est plein et la place suffisante, échanger contre l'objet sélectionné
-- `Tab` : consulter/masquer la cargaison, sans immobiliser le joueur ni mettre le monde en pause
-- `1–3` (rangée supérieure) : sélectionner un objet transporté ; `G` : le déposer sur un sol accessible
+- `E` près d'un objet : ramasser dans une place libre
+- Sac plein : viser un objet à portée, puis `1`, `2` ou `3` (rangée supérieure) pour remplacer directement le slot correspondant
 - `E` maintenu 2,2 secondes dans la zone **SERVICE EXIT** : extraire
 - `R` ou bouton **NEW RUN** sur le résultat : nouvelle run complète
 - `M` : marché de terrain latéral ; **SHORT** et **CLOSE** par entreprise. Le joueur reste immobile, mais les gardes continuent à se déplacer et tirer. `M` / `Échap` rend immédiatement les contrôles de combat.
@@ -28,22 +27,22 @@ La première attaque d'un équipement déverrouille la sortie de service au sud-
 
 L'extraction ferme les positions restantes **aux prix affichés à cet instant**, arrête la run et présente le détail VITA / ARC, le profit total puis le nouveau cash avec des compteurs animés. Attendre la fin des réactions ARC permet d'obtenir **+$9,900 réalisés**, soit **$19,900** de cash final. Extraire plus tôt peut produire moins de profit.
 
-## Loot V1 — trois emplacements
+## Loot — trois objets, trois icônes
 
-Six objets fixes sont placés dans les baies de service VITA/ARC, derrière ou entre les machines. Pas de génération, de pluie de pickups ni de raretés. L'identification apparaît à portée, avec contrôle de ligne de vue. Le panneau de cargaison affiche les valeurs, poids, catégories et le coût de mouvement.
+Le HUD montre uniquement trois silhouettes avec leur prix court. Aucun poids, ralentissement, catégorie visible, menu d'inspection ou commande de dépôt. À portée et en ligne de vue : prix + `E`. Sac plein : viser le loot révèle les trois slots numérotés ; `1/2/3` remplace directement le slot choisi. L'objet remplacé réapparaît au même endroit et reste récupérable. Les autres slots ne bougent pas.
 
-- **VITA Prototype** : `$4,800`, **4 kg**, **1 slot** — recherche médicale.
-- **Lab Analyzer** : `$3,600`, **3 kg**, **1 slot** — laboratoire.
-- **Sample Case** : `$1,600`, **1 kg**, **1 slot** — biotech.
-- **ARC Industrial Module** : `$7,200`, **12 kg**, **2 slots** — industriel.
-- **Copper Spool** : `$2,600`, **8 kg**, **1 slot** — matière première.
-- **Power Component** : `$3,000`, **2 kg**, **1 slot** — technologie énergétique.
+Six objets fixes, plus grands et dégagés dans les allées gardées, ont chacun une silhouette et une palette distinctes :
 
-Les numéros sélectionnent les objets transportés, pas des cases de Tetris. Un objet encombrant consomme deux des trois emplacements. Un échange sans assez de place est refusé sans perdre d'objet ; `G` permet de libérer de la place. Les objets déposés ou remplacés restent physiquement récupérables, avec la même identité.
+- Prototype VITA : mallette ivoire / croix rouge brique — `$4,800`.
+- Analyseur : instrument bleu en L — `$3,600`.
+- Échantillons : deux flacons ivoire / violet sourd — `$1,600`.
+- Module ARC : bloc ocre à ailettes — `$7,200`.
+- Bobine : cuivre roux entre deux disques — `$2,600`.
+- Composant énergétique : trois isolateurs verts — `$3,000`.
 
-Les quatre premiers kilos sont gratuits ; chaque kilo au-delà réduit la vitesse de marche de 1 %, **plafonné à 16 %**. Accélération, visée, tir et dash (vitesse, cooldown, invulnérabilité) restent inchangés. Exemple : module + cuivre = 20 kg / −16 % ; module + prototype = 16 kg / −12 %. Trois petits objets prototype + analyseur + composant valent `$11,400` pour 9 kg / −5 % : la valeur n'est pas le seul choix.
+**Un objet occupe toujours un slot**, même le module ARC. Ramassage : contraction rapide de l'objet, icône vers le slot et son bref réutilisé. Pas de glow permanent. Les valeurs et le service financier restent inchangés.
 
-La cargaison ne crée aucun cash avant extraction. À la sortie, elle est vendue automatiquement par le service économique : **MARKET PROFIT +$9,900 / STOLEN ASSETS +$12,000 / RUN PROFIT +$21,900 / NEW NET CASH $31,900** avec module ARC + prototype VITA. Le relevé nomme les objets effectivement vendus. Le premier sabotage d'équipement reste nécessaire pour débloquer la sortie.
+La cargaison n'est vendue qu'à l'extraction. Exemple avec module + prototype + composant : **MARKET PROFIT +$9,900 / STOLEN ASSETS +$15,000 / RUN PROFIT +$24,900 / NEW NET CASH $34,900**. Le relevé nomme les trois objets vendus. Le premier sabotage d'équipement reste nécessaire pour débloquer la sortie.
 
 ## Cash, positions et risque V1
 
@@ -58,7 +57,7 @@ Cette version conserve deux entreprises, trois équipements et deux gardes par i
 ## Architecture
 
 - `player/` : locomotion, visée, dash invulnérable, santé/mort et caméra de suivi
-- `inventory/` : manifeste unique du sac de run, capacité, sélection et échanges ; aucune modification de cash
+- `inventory/` : manifeste unique du sac de run, capacité et échanges directs conservant l'ordre des slots ; aucune modification de cash
 - `weapons/` + `data/` : comportement de tir et réglages d’armes en ressources `.tres`
 - `combat/` : agents de sécurité stylisés et petite machine à états patrouille/engagement/tir
 - `effects/` : feedback visuel, hitstop, camera shake et premiers sons procéduraux mutualisés
@@ -97,7 +96,9 @@ godot --headless --path . --script res://tests/audio_lifecycle_test.gd
 
 Les tests couvrent les systèmes précédents, le cash/P&L signé, les clôtures indépendantes, l'absence de double paiement, le règlement pendant une transition de prix, la perte des gains, l'interaction vulnérable et le reset réel de scène. Le scénario complet a aussi été exécuté dans Godot 4.7.1 **Forward+** avec déplacements, visée/tirs SMG et dash : trois machines ARC détruites, garde poursuivant jusqu'à la sortie et interrompant `E` par un tir, puis extraction à `$19,900` et nouvelle run.
 
-La passe loot est aussi validée en **Forward+ Vulkan** : deux shorts via les boutons du marché, tir de garde reçu avec marché ouvert, combat SMG dans ARC et VITA, trois machines ARC détruites, module + cuivre ramassés via `E`, dépôt/reprise via `G`/`E`, remplacement du cuivre par le prototype, retour à 16 kg, extraction à `$31,900`, puis reset complet. Aucun soin, téléportation ni désactivation des gardes dans ce scénario graphique. Les tests dédiés couvrent aussi les obstacles, échanges impossibles, absence de duplication, double règlement, mort et fermeture de l'overlay en cas de décès.
+La refonte visuelle du loot est validée en **Forward+ Vulkan** avec captures inspectées à 1280×720 : deux shorts, tir de garde reçu avec marché ouvert, combat SMG dans ARC et VITA, sabotage ARC, trois objets ARC ramassés via `E`, puis remplacement direct de la bobine par le prototype avec `2`. Le retour, l'extraction à `$34,900` et le reset complet sont vérifiés sans soin, téléportation ni désactivation des gardes dans ce scénario graphique. La reconnaissance repose sur les six formes/couleurs, pas sur des noms, catégories ou instructions affichés.
+
+Les tests couvrent aussi les trois indices de remplacement, l'ordre des slots, les échanges répétés sans duplication, portée/LOS, absence d'action sur E quand le sac est plein, touches hors contexte, vitesse réelle inchangée, vente séparée/idempotente, mort et reset. Les anciennes assertions de poids/encombrement sont remplacées par celles du nouveau contrat demandé ; les tests financiers restent intacts.
 
 ### Diagnostic ObjectDB
 
@@ -107,4 +108,4 @@ Reproduit avant correction : 3–4 objets signalés à la fermeture du smoke tes
 
 ## Placeholders / limites
 
-Géométrie, personnages, animations, objets de valeur et audio restent procéduraux. Le loot est posé sur le sol, sans lancer/chute en rigid-body, stacking ou équipement porté visible. La sécurité utilise une navigation locale simple. Le marché immobilise le joueur et annule l'extraction, sans arrêter le danger ; consulter le sac conserve les contrôles. Les résultats restent propres à chaque run, sans sauvegarde, génération aléatoire ou progression permanente.
+Géométrie, personnages, animations, objets de valeur et audio restent procéduraux. Le loot reste procédural, posé au sol, sans lancer/chute en rigid-body ni équipement porté visible. La sécurité utilise une navigation locale simple. Le marché immobilise le joueur et annule l'extraction, sans arrêter le danger ; les trois slots sont visibles sans commande d'inspection. Les résultats restent propres à chaque run, sans sauvegarde, génération aléatoire ou progression permanente.

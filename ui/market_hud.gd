@@ -6,7 +6,6 @@ const MARKET_ROW_SCENE := preload("res://ui/market_hud_row.tscn")
 @onready var market_rows: VBoxContainer = %MarketRows
 @onready var notification_panel: PanelContainer = %NotificationPanel
 @onready var notification_label: Label = %NotificationLabel
-@onready var profit_label: Label = %ProfitLabel
 @onready var cash_label: Label = %CashLabel
 @onready var unrealized_label: Label = %UnrealizedLabel
 @onready var realized_label: Label = %RealizedLabel
@@ -14,7 +13,6 @@ const MARKET_ROW_SCENE := preload("res://ui/market_hud_row.tscn")
 var _market: MarketService
 var _rows: Dictionary = {}
 var _notification_tween: Tween
-var _profit_tween: Tween
 
 func _ready() -> void:
 	_market = get_tree().get_first_node_in_group("market_service") as MarketService
@@ -87,33 +85,12 @@ func _on_price_reaction_started(company_id: String, _target_price: float, _cause
 	if audio != null and audio.has_method("play_ui"):
 		audio.play_ui(&"market_drop", 0.018)
 
-func _on_sabotage_resolved(company_id: String, _current_price: float, unrealized_pnl: float, _cause_company_id: String, is_final_stage: bool) -> void:
+func _on_sabotage_resolved(company_id: String, _current_price: float, _unrealized_pnl: float, _cause_company_id: String, is_final_stage: bool) -> void:
 	if _market == null or not _market.has_open_position(company_id):
 		return
 	var row := get_company_row(company_id)
 	if row != null:
 		row.pulse_pnl()
-	_show_profit_payoff(company_id, unrealized_pnl, is_final_stage)
 	var audio := get_tree().get_first_node_in_group("audio_service")
 	if audio != null and audio.has_method("play_ui"):
 		audio.play_ui(&"profit_final" if is_final_stage else &"profit_tick", 0.012)
-
-func _show_profit_payoff(company_id: String, unrealized_pnl: float, is_final: bool) -> void:
-	if _profit_tween != null and _profit_tween.is_valid():
-		_profit_tween.kill()
-	var company := _market.get_company_definition(company_id)
-	var ticker := company.ticker if company != null else company_id.to_upper()
-	profit_label.text = "%s  %s  / UNREALIZED" % [ticker, MoneyFormat.pnl(unrealized_pnl)]
-	profit_label.add_theme_font_size_override("font_size", 28 if is_final else 22)
-	profit_label.visible = true
-	profit_label.modulate = Color(0.65, 0.8, 0.65, 0.0)
-	profit_label.scale = Vector2(0.82, 0.82) if is_final else Vector2(0.92, 0.92)
-	profit_label.pivot_offset = profit_label.size * 0.5
-	_profit_tween = create_tween().set_ignore_time_scale(true)
-	_profit_tween.set_parallel(true)
-	_profit_tween.tween_property(profit_label, "modulate:a", 1.0, 0.13)
-	_profit_tween.tween_property(profit_label, "scale", Vector2.ONE, 0.28).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	_profit_tween.set_parallel(false)
-	_profit_tween.tween_interval(1.65 if is_final else 0.7)
-	_profit_tween.tween_property(profit_label, "modulate:a", 0.0, 0.4)
-	_profit_tween.finished.connect(func() -> void: profit_label.visible = false)

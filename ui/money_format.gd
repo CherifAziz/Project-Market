@@ -1,6 +1,9 @@
 class_name MoneyFormat
 extends RefCounted
 
+static func short_cash(value: float) -> String:
+	return "$%.1fk" % (value / 1000.0) if absf(value) >= 1000.0 else cash(value)
+
 static func cash(value: float) -> String:
 	var rounded := int(round(value))
 	return ("-$" if rounded < 0 else "$") + _thousands(absi(rounded))

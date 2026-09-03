@@ -57,14 +57,6 @@ interact={
 "deadzone": 0.2,
 "events": [Object(InputEventKey,"physical_keycode":69)]
 }
-inventory={
-"deadzone": 0.2,
-"events": [Object(InputEventKey,"physical_keycode":4194306)]
-}
-drop_loot={
-"deadzone": 0.2,
-"events": [Object(InputEventKey,"physical_keycode":71)]
-}
 cargo_1={
 "deadzone": 0.2,
 "events": [Object(InputEventKey,"physical_keycode":49)]
