@@ -1,5 +1,5 @@
 # Economy
 
-Frontière réservée aux futurs systèmes économiques (marché, positions, entreprises, événements).
+Prototype économique volontairement limité à une entreprise et une position short.
 
-Ce module ne doit pas dépendre directement du joueur, du rendu ou des armes. Les intégrations futures passeront par des événements et des modèles de données dédiés.
+`MarketService` est la source de vérité pour le prix courant et le P&L. Il reçoit les événements du monde via le coordinateur de la scène principale, sans dépendre du joueur, des armes ou du rendu. `ShortPosition` porte uniquement le calcul financier pur.

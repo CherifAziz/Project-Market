@@ -1,0 +1,192 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://ui/market_panel.gd" id="1_panel"]
+
+[sub_resource type="StyleBoxFlat" id="Style_panel"]
+bg_color = Color(0.105, 0.118, 0.112, 0.97)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.42, 0.5, 0.44, 0.75)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+shadow_color = Color(0.03, 0.04, 0.035, 0.62)
+shadow_size = 18
+
+[sub_resource type="StyleBoxFlat" id="Style_position"]
+bg_color = Color(0.07, 0.078, 0.075, 0.82)
+border_width_left = 3
+border_color = Color(0.34, 0.47, 0.39, 0.9)
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+
+[sub_resource type="StyleBoxFlat" id="Style_button"]
+bg_color = Color(0.31, 0.42, 0.35, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.55, 0.65, 0.56, 0.85)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[node name="MarketPanel" type="CanvasLayer"]
+visible = false
+layer = 30
+script = ExtResource("1_panel")
+
+[node name="Backdrop" type="ColorRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+color = Color(0.035, 0.042, 0.04, 0.72)
+
+[node name="Center" type="PanelContainer" parent="."]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -280.0
+offset_top = -250.0
+offset_right = 280.0
+offset_bottom = 250.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("Style_panel")
+
+[node name="Margin" type="MarginContainer" parent="Center"]
+layout_mode = 2
+theme_override_constants/margin_left = 34
+theme_override_constants/margin_top = 28
+theme_override_constants/margin_right = 34
+theme_override_constants/margin_bottom = 26
+
+[node name="VBox" type="VBoxContainer" parent="Center/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="MarketHeader" type="Label" parent="Center/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.67, 0.7, 0.65, 1)
+theme_override_font_sizes/font_size = 11
+text = "MARKET  //  DETERMINISTIC PROTOTYPE"
+
+[node name="CompanyName" type="Label" parent="Center/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.94, 0.92, 0.86, 1)
+theme_override_font_sizes/font_size = 30
+text = "VITA MEDICAL"
+
+[node name="Ticker" type="Label" parent="Center/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.72, 0.67, 1)
+theme_override_font_sizes/font_size = 12
+text = "VITA  /  MEDICAL MANUFACTURING"
+
+[node name="SpacerA" type="Control" parent="Center/Margin/VBox"]
+custom_minimum_size = Vector2(0, 8)
+layout_mode = 2
+
+[node name="PriceRow" type="HBoxContainer" parent="Center/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 18
+
+[node name="Price" type="Label" parent="Center/Margin/VBox/PriceRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.65, 0.77, 0.67, 1)
+theme_override_font_sizes/font_size = 46
+text = "$42.00"
+
+[node name="Variation" type="Label" parent="Center/Margin/VBox/PriceRow"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.84, 0.8, 0.72, 1)
+theme_override_font_sizes/font_size = 18
+text = "0.00%"
+vertical_alignment = 2
+
+[node name="Operations" type="Label" parent="Center/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.73, 0.69, 0.61, 1)
+theme_override_font_sizes/font_size = 11
+text = "CRITICAL SYSTEMS OFFLINE  0 / 3"
+
+[node name="SpacerB" type="Control" parent="Center/Margin/VBox"]
+custom_minimum_size = Vector2(0, 8)
+layout_mode = 2
+
+[node name="PositionPanel" type="PanelContainer" parent="Center/Margin/VBox"]
+custom_minimum_size = Vector2(0, 102)
+layout_mode = 2
+theme_override_styles/panel = SubResource("Style_position")
+
+[node name="PositionMargin" type="MarginContainer" parent="Center/Margin/VBox/PositionPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 18
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 18
+theme_override_constants/margin_bottom = 12
+
+[node name="PositionVBox" type="VBoxContainer" parent="Center/Margin/VBox/PositionPanel/PositionMargin"]
+layout_mode = 2
+theme_override_constants/separation = 5
+
+[node name="PositionTitle" type="Label" parent="Center/Margin/VBox/PositionPanel/PositionMargin/PositionVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.88, 0.86, 0.8, 1)
+theme_override_font_sizes/font_size = 14
+text = "NO OPEN POSITION"
+
+[node name="PositionDetails" type="Label" parent="Center/Margin/VBox/PositionPanel/PositionMargin/PositionVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.62, 0.64, 0.6, 1)
+theme_override_font_sizes/font_size = 11
+text = "ONE POSITION MAXIMUM IN THIS PROTOTYPE"
+
+[node name="PositionPnL" type="Label" parent="Center/Margin/VBox/PositionPanel/PositionMargin/PositionVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.62, 0.77, 0.62, 1)
+theme_override_font_sizes/font_size = 17
+
+[node name="SpacerC" type="Control" parent="Center/Margin/VBox"]
+custom_minimum_size = Vector2(0, 8)
+layout_mode = 2
+
+[node name="ShortButton" type="Button" parent="Center/Margin/VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 54)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.94, 0.88, 1)
+theme_override_colors/font_hover_color = Color(1, 1, 0.96, 1)
+theme_override_colors/font_disabled_color = Color(0.5, 0.52, 0.49, 1)
+theme_override_font_sizes/font_size = 15
+theme_override_styles/normal = SubResource("Style_button")
+theme_override_styles/hover = SubResource("Style_button")
+theme_override_styles/pressed = SubResource("Style_position")
+theme_override_styles/disabled = SubResource("Style_position")
+text = "SHORT 300 SHARES"
+
+[node name="Footer" type="Label" parent="Center/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.52, 0.54, 0.5, 1)
+theme_override_font_sizes/font_size = 10
+text = "M / ESC  CLOSE      PRICE REACTS TO PHYSICAL OPERATIONS"
+horizontal_alignment = 1

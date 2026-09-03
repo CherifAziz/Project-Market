@@ -21,8 +21,10 @@ func _run() -> void:
 
 	var player := get_first_node_in_group("player") as PlayerController
 	var targets := get_nodes_in_group("targets")
+	var vita_equipment := get_nodes_in_group("vita_equipment")
 	_check(player != null, "player scene is present")
 	_check(targets.size() == 11, "all eleven targets spawn")
+	_check(vita_equipment.size() == 3, "VITA adds exactly three separate critical machines")
 	if player == null or targets.is_empty():
 		quit(1)
 		return

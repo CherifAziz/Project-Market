@@ -1,21 +1,42 @@
 extends Node3D
 
 @onready var world_environment: WorldEnvironment = $WorldEnvironment
+@onready var player: PlayerController = $Player
+@onready var market_service: MarketService = $MarketService
+@onready var vita_facility: CompanyFacility = $VITAFacility
+@onready var market_panel: MarketPanel = $MarketPanel
 
 func _ready() -> void:
 	Engine.time_scale = 1.0
 	Input.mouse_mode = Input.MOUSE_MODE_HIDDEN
 	_setup_environment()
+	vita_facility.equipment_destroyed.connect(_on_facility_equipment_destroyed)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("restart"):
 		Engine.time_scale = 1.0
 		get_tree().reload_current_scene()
+	elif event.is_action_pressed("market"):
+		_set_market_open(not market_panel.is_open())
 	elif event.is_action_pressed("ui_cancel"):
-		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if Input.mouse_mode == Input.MOUSE_MODE_HIDDEN else Input.MOUSE_MODE_HIDDEN
+		if market_panel.is_open():
+			_set_market_open(false)
+		else:
+			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if Input.mouse_mode == Input.MOUSE_MODE_HIDDEN else Input.MOUSE_MODE_HIDDEN
 
 func _exit_tree() -> void:
 	Engine.time_scale = 1.0
+
+func _on_facility_equipment_destroyed(equipment_id: String, _destroyed_count: int, _total_count: int) -> void:
+	market_service.register_sabotage(equipment_id)
+
+func _set_market_open(open: bool) -> void:
+	if open:
+		market_panel.open_market()
+	else:
+		market_panel.close_market()
+	player.set_gameplay_input_enabled(not open)
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if open else Input.MOUSE_MODE_HIDDEN
 
 func _setup_environment() -> void:
 	var sky_material := ProceduralSkyMaterial.new()

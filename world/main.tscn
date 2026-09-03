@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=12 format=3]
 
 [ext_resource type="Script" path="res://world/main.gd" id="1_main"]
 [ext_resource type="Script" path="res://world/arena_builder.gd" id="2_arena"]
@@ -6,6 +6,11 @@
 [ext_resource type="PackedScene" path="res://player/player.tscn" id="4_player"]
 [ext_resource type="Script" path="res://player/follow_camera.gd" id="5_camera"]
 [ext_resource type="PackedScene" path="res://ui/hud.tscn" id="6_hud"]
+[ext_resource type="Script" path="res://economy/market_service.gd" id="7_market"]
+[ext_resource type="Resource" path="res://data/vita_medical.tres" id="8_vita"]
+[ext_resource type="PackedScene" path="res://world/company_facility.tscn" id="9_facility"]
+[ext_resource type="PackedScene" path="res://ui/market_panel.tscn" id="10_market_panel"]
+[ext_resource type="PackedScene" path="res://ui/market_hud.tscn" id="11_market_hud"]
 
 [node name="Main" type="Node3D"]
 script = ExtResource("1_main")
@@ -26,8 +31,16 @@ light_color = Color(0.59, 0.69, 0.72, 1)
 light_energy = 0.2
 shadow_enabled = false
 
+[node name="MarketService" type="Node" parent="."]
+script = ExtResource("7_market")
+company = ExtResource("8_vita")
+
 [node name="ArenaBuilder" type="Node3D" parent="."]
 script = ExtResource("2_arena")
+
+[node name="VITAFacility" parent="." instance=ExtResource("9_facility")]
+position = Vector3(-2, 0, -10.2)
+company = ExtResource("8_vita")
 
 [node name="Effects" type="Node3D" parent="."]
 script = ExtResource("3_effects")
@@ -47,3 +60,7 @@ near = 0.08
 far = 90.0
 
 [node name="HUD" parent="." instance=ExtResource("6_hud")]
+
+[node name="MarketHUD" parent="." instance=ExtResource("11_market_hud")]
+
+[node name="MarketPanel" parent="." instance=ExtResource("10_market_panel")]

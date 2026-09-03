@@ -1,6 +1,6 @@
 # PROJECT MARKET — Combat Playground
 
-Première étape jouable du projet : mouvement indépendant de la visée, dash et SMG automatique dans un quartier financier miniature en fin d'après-midi.
+Prototype jouable : mouvement indépendant de la visée, dash et SMG automatique dans un quartier financier miniature en fin d'après-midi. La première boucle d'identité du jeu relie désormais le sabotage physique de VITA MEDICAL à son cours de marché et à une position short unique.
 
 ## Lancer
 
@@ -13,11 +13,12 @@ Ouvrir `project.godot` avec Godot 4.7.1 puis lancer le projet (`F6`/`F5`). Le re
 - Clic gauche maintenu : tir automatique
 - `Espace` ou `Maj` : dash
 - `R` : recharger la scène
+- `M` : ouvrir / fermer le marché (désactive temporairement les contrôles de combat)
 - `Échap` : libérer/capturer la souris
 
 ## Périmètre
 
-Cette version ne contient volontairement ni économie, ni trading, ni progression roguelite. Le dossier `economy/` réserve seulement la frontière du futur module.
+Cette version contient uniquement VITA MEDICAL, trois équipements critiques et une position `SHORT ×300`. Elle ne contient volontairement aucune simulation économique générale, gestion de cash, position longue ou progression roguelite.
 
 ## Architecture
 
@@ -25,9 +26,10 @@ Cette version ne contient volontairement ni économie, ni trading, ni progressio
 - `weapons/` + `data/` : comportement de tir et réglages d’armes en ressources `.tres`
 - `combat/` : cibles, points de vie et destruction
 - `effects/` : feedback visuel, hitstop et camera shake
-- `world/` : scène principale, éclairage et construction procédurale de l’arène
-- `ui/` : HUD, réticule et overlay d’écran
-- `economy/` : frontière réservée, sans implémentation à cette étape
+- `world/` : scène principale, arène et installation VITA ; le monde émet des événements de destruction
+- `economy/` : source de vérité du prix, séquençage des réactions et calcul pur de la position short
+- `ui/` : HUD, réticule, panneau de marché et widget VITA ; aucun calcul économique dans l’UI
+- `data/` : définitions réutilisables des armes et de l’entreprise VITA
 
 ## Direction visuelle
 
@@ -45,4 +47,6 @@ Les réglages les plus directs sont regroupés dans :
 
 ```powershell
 godot --headless --path . --script res://tests/playground_smoke_test.gd
+godot --headless --path . --script res://tests/market_logic_test.gd
+godot --headless --path . --script res://tests/market_flow_test.gd
 ```

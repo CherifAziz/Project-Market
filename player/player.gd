@@ -24,12 +24,27 @@ var _dash_time_left := 0.0
 var _dash_cooldown_left := 0.0
 var _visual_time := 0.0
 var _dash_tween: Tween
+var _gameplay_input_enabled := true
 
 func _ready() -> void:
 	add_to_group("player")
 	aim_cursor.top_level = true
 
 func _physics_process(delta: float) -> void:
+	if not _gameplay_input_enabled:
+		_update_dash_timers(delta)
+		velocity.x = move_toward(velocity.x, 0.0, deceleration * delta)
+		velocity.z = move_toward(velocity.z, 0.0, deceleration * delta)
+		if not is_on_floor():
+			velocity.y -= 18.0 * delta
+		else:
+			velocity.y = -0.5
+		move_and_slide()
+		weapon.tick(delta, false)
+		_update_visual(delta, Vector3.ZERO)
+		dash_state_changed.emit(get_dash_ready_ratio())
+		return
+
 	_update_aim()
 	_update_dash_timers(delta)
 
@@ -107,3 +122,11 @@ func _update_visual(delta: float, move_direction: Vector3) -> void:
 func get_dash_ready_ratio() -> float:
 	return 1.0 - clampf(_dash_cooldown_left / dash_cooldown, 0.0, 1.0)
 
+func set_gameplay_input_enabled(enabled: bool) -> void:
+	_gameplay_input_enabled = enabled
+	if not enabled:
+		velocity.x = 0.0
+		velocity.z = 0.0
+
+func is_gameplay_input_enabled() -> bool:
+	return _gameplay_input_enabled

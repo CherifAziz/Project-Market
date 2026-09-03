@@ -128,6 +128,14 @@ func spawn_kill_burst(position: Vector3, color := Color("cf6848")) -> void:
 	_spawn_ring(position + Vector3.UP * 0.045, color, 0.55, 2.4, 0.28)
 	add_camera_shake(0.48)
 
+func spawn_equipment_destruction(position: Vector3, color: Color, severity := 1) -> void:
+	var resolved_severity := clampi(severity, 1, 3)
+	spawn_impact(position + Vector3.UP * 0.9, Vector3.UP, color, 1.25 + float(resolved_severity) * 0.16)
+	_spawn_ring(position + Vector3.UP * 0.05, color, 0.42, 1.55 + float(resolved_severity) * 0.12, 0.3)
+	_spawn_debris(position + Vector3.UP * 0.72, color, resolved_severity)
+	_spawn_smoke(position + Vector3.UP * 0.78, resolved_severity)
+	add_camera_shake(0.22 + float(resolved_severity) * 0.035)
+
 func spawn_dash(position: Vector3, direction: Vector3) -> void:
 	var color := Color("c7b58d")
 	_spawn_ring(position + Vector3.UP * 0.045, color, 0.45, 1.65, 0.22)
@@ -184,6 +192,74 @@ func _spawn_ring(position: Vector3, color: Color, start_scale: float, end_scale:
 	tween.tween_property(ring, "transparency", 1.0, duration).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	tween.finished.connect(ring.queue_free)
 
+func _spawn_debris(position: Vector3, color: Color, severity: int) -> void:
+	var particles := GPUParticles3D.new()
+	particles.one_shot = true
+	particles.amount = 7 + severity * 2
+	particles.lifetime = 0.85
+	particles.explosiveness = 1.0
+	particles.randomness = 0.8
+	particles.visibility_aabb = AABB(Vector3(-3, -2, -3), Vector3(6, 5, 6))
+
+	var process := ParticleProcessMaterial.new()
+	process.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_BOX
+	process.emission_box_extents = Vector3(0.45, 0.28, 0.4)
+	process.direction = Vector3.UP
+	process.spread = 72.0
+	process.initial_velocity_min = 2.0
+	process.initial_velocity_max = 3.8 + float(severity) * 0.35
+	process.gravity = Vector3(0, -8.5, 0)
+	process.scale_min = 0.65
+	process.scale_max = 1.25
+	process.color = color.darkened(0.2)
+	particles.process_material = process
+
+	var debris_mesh := BoxMesh.new()
+	debris_mesh.size = Vector3(0.11, 0.055, 0.08)
+	debris_mesh.material = _matte_material(color.darkened(0.28), 0.35, 0.62)
+	particles.draw_pass_1 = debris_mesh
+	add_child(particles)
+	particles.global_position = position
+	particles.emitting = true
+	_free_after(particles, 1.25)
+
+func _spawn_smoke(position: Vector3, severity: int) -> void:
+	var particles := GPUParticles3D.new()
+	particles.one_shot = true
+	particles.amount = 5 + severity * 2
+	particles.lifetime = 1.65
+	particles.explosiveness = 0.72
+	particles.randomness = 0.9
+	particles.visibility_aabb = AABB(Vector3(-2, -1, -2), Vector3(4, 5, 4))
+
+	var process := ParticleProcessMaterial.new()
+	process.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_BOX
+	process.emission_box_extents = Vector3(0.4, 0.2, 0.36)
+	process.direction = Vector3.UP
+	process.spread = 32.0
+	process.initial_velocity_min = 0.35
+	process.initial_velocity_max = 0.85
+	process.gravity = Vector3(0, 0.45, 0)
+	process.scale_min = 0.65
+	process.scale_max = 1.35
+	process.color = Color(0.24, 0.25, 0.24, 0.62)
+	particles.process_material = process
+
+	var smoke_mesh := SphereMesh.new()
+	smoke_mesh.radius = 0.2
+	smoke_mesh.height = 0.4
+	smoke_mesh.radial_segments = 7
+	smoke_mesh.rings = 4
+	var smoke_material := _matte_material(Color(0.3, 0.31, 0.29, 0.52), 0.0, 1.0)
+	smoke_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	smoke_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	smoke_mesh.material = smoke_material
+	particles.draw_pass_1 = smoke_mesh
+	add_child(particles)
+	particles.global_position = position
+	particles.emitting = true
+	_free_after(particles, 2.2)
+
 func _emissive_material(color: Color, energy: float, transparent := false) -> StandardMaterial3D:
 	var material := StandardMaterial3D.new()
 	material.albedo_color = color
@@ -195,6 +271,13 @@ func _emissive_material(color: Color, energy: float, transparent := false) -> St
 	material.emission_energy_multiplier = energy
 	if transparent:
 		material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	return material
+
+func _matte_material(color: Color, metallic: float, roughness: float) -> StandardMaterial3D:
+	var material := StandardMaterial3D.new()
+	material.albedo_color = color
+	material.metallic = metallic
+	material.roughness = roughness
 	return material
 
 func _free_after(node: Node, delay: float) -> void:
