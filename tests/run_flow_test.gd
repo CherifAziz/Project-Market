@@ -81,7 +81,7 @@ func _run() -> void:
 	await _wait(0.12)
 	main._set_market_open(true)
 	await _wait(0.5)
-	_check(exit_point.get_progress() == 0.0 and not exit_point.is_completed(), "market pause cannot be exploited to complete extraction")
+	_check(exit_point.get_progress() == 0.0 and not exit_point.is_completed() and director.is_security_enabled(), "live market overlay cancels extraction without pausing security")
 	Input.action_release("interact")
 	main._set_market_open(false)
 	for machine in machines:
@@ -146,8 +146,7 @@ func _run() -> void:
 	Input.action_release("interact")
 	_check(exit_point.is_completed() and market.get_cash() == 10000.0 and market.get_total_realized_pnl() == 0.0, "VITA attack also unlocks extraction and a run with no positions settles without phantom profit")
 	current_scene = null
-	main.queue_free()
-	await _frames(3)
+	_check(await SceneCleanup.free_scene(self, main), "final scene and audio resources are released before quitting")
 	print("Run flow test complete.")
 	quit(1 if _failed else 0)
 

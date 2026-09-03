@@ -1,4 +1,4 @@
-[gd_scene load_steps=18 format=3]
+[gd_scene load_steps=21 format=3]
 
 [ext_resource type="Script" path="res://world/main.gd" id="1_main"]
 [ext_resource type="Script" path="res://world/arena_builder.gd" id="2_arena"]
@@ -17,6 +17,9 @@
 [ext_resource type="Script" path="res://world/security_director.gd" id="15_security"]
 [ext_resource type="PackedScene" path="res://world/extraction_point.tscn" id="16_exit"]
 [ext_resource type="PackedScene" path="res://ui/run_results.tscn" id="17_results"]
+[ext_resource type="Script" path="res://inventory/run_inventory.gd" id="18_inventory"]
+[ext_resource type="Script" path="res://player/loot_interactor.gd" id="19_interactor"]
+[ext_resource type="PackedScene" path="res://ui/inventory_hud.tscn" id="20_cargo_hud"]
 
 [node name="Main" type="Node3D"]
 script = ExtResource("1_main")
@@ -41,6 +44,9 @@ shadow_enabled = false
 script = ExtResource("7_market")
 companies = [ExtResource("8_vita"), ExtResource("13_arc")]
 dependencies = [ExtResource("14_arc_vita")]
+
+[node name="RunInventory" type="Node" parent="."]
+script = ExtResource("18_inventory")
 
 [node name="ArenaBuilder" type="Node3D" parent="."]
 script = ExtResource("2_arena")
@@ -85,5 +91,10 @@ far = 90.0
 
 [node name="ExtractionPoint" parent="." instance=ExtResource("16_exit")]
 position = Vector3(6.9, 0, 10.3)
+
+[node name="LootInteractor" type="Node" parent="."]
+script = ExtResource("19_interactor")
+
+[node name="InventoryHUD" parent="." instance=ExtResource("20_cargo_hud")]
 
 [node name="RunResults" parent="." instance=ExtResource("17_results")]

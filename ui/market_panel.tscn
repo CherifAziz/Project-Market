@@ -28,17 +28,17 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 0
-color = Color(0.035, 0.042, 0.04, 0.72)
+color = Color(0.035, 0.042, 0.04, 0.08)
 
 [node name="Center" type="PanelContainer" parent="."]
 anchors_preset = 8
-anchor_left = 0.5
+anchor_left = 1.0
 anchor_top = 0.5
-anchor_right = 0.5
+anchor_right = 1.0
 anchor_bottom = 0.5
-offset_left = -370.0
+offset_left = -680.0
 offset_top = -390.0
-offset_right = 370.0
+offset_right = -30.0
 offset_bottom = 390.0
 grow_horizontal = 2
 grow_vertical = 2
@@ -65,7 +65,7 @@ text = "PROJECT MARKET  //  LIVE COMPANIES"
 layout_mode = 2
 theme_override_colors/font_color = Color(0.53, 0.56, 0.52, 1)
 theme_override_font_sizes/font_size = 10
-text = "INDEPENDENT POSITIONS  ·  PHYSICAL EVENTS DRIVE PRICES"
+text = "WORLD LIVE  //  YOU ARE STATIONARY AND EXPOSED"
 
 [node name="Account" type="HBoxContainer" parent="Center/Margin/VBox"]
 layout_mode = 2
@@ -138,5 +138,5 @@ horizontal_alignment = 1
 layout_mode = 2
 theme_override_colors/font_color = Color(0.52, 0.54, 0.5, 1)
 theme_override_font_sizes/font_size = 10
-text = "EXTRACT TO SECURE GAINS. DEATH FORFEITS ALL RUN GAINS, EVEN CLOSED ONES.\nM / ESC  CLOSE  ·  OPENING A SHORT DOES NOT SPEND CASH"
+text = "M / ESC  RETURN TO COMBAT  ·  SECURITY DOES NOT PAUSE\nDEATH LOSES CARGO + ALL RUN GAINS, EVEN CLOSED ONES.\nOPENING A SHORT DOES NOT SPEND CASH"
 horizontal_alignment = 1

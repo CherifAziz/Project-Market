@@ -15,17 +15,20 @@
 
 ## Existing architecture
 
-- `player/`: movement, mouse aim, dash/evasion, health, death/restart state, and follow camera.
+- `player/`: movement, mouse aim, dash/evasion, health, follow camera, weight-based movement cost, and proximity/LOS loot interaction. Carry weight does not change dash evasion.
 - `combat/`: company security agents, their lightweight patrol/LOS/ranged-combat state machine, and health/destruction behavior.
 - `weapons/` + `data/`: weapon behavior and data-driven resources.
 - `effects/`: shared combat, destruction, and lightweight procedural audio feedback.
-- `world/`: main scene/run coordinator, procedural arena, company facilities, physical equipment, physical extraction point, and `SecurityDirector` for local alerts. World objects emit facts; they never change stock prices or cash directly.
-- `economy/`: one multi-company `MarketService` owns prices, positions, run cash, realized P&L and terminal settlement; `MarketDependency` describes cross-company reactions, and `ShortPosition` owns the pure P&L calculation.
+- `world/`: main/run coordinator, arena, company facilities/equipment, authored `LootPickup` objects, extraction point, and local `SecurityDirector`. World objects emit facts; they never change prices or cash directly.
+- `inventory/`: one three-slot `RunInventory` owns unique carried-item manifests, selection and atomic exchanges. `data/loot/` defines fixed names, values, weights, bulk and categories. No random loot, rarity or equipment system.
+- `economy/`: one `MarketService` owns prices, positions, run cash and settlement (market profit and loot sale kept separate); `MarketDependency` describes cross-company reactions, and `ShortPosition` owns pure P&L math.
 - `ui/`: HUD/market views display service state; `RunResults` animates a detached settled statement. UI must not calculate or own economic state.
 - Current economic boundary: `World / CompanyFacility -> Main coordinator -> Economy / MarketService -> UI`.
 - Current security boundary: `CompanyFacility equipment attack -> SecurityDirector -> matching company agents + HUD`. Keep security local to the attacked company; it must not own or mutate market state.
 - Current run boundary: `ExtractionPoint / player death -> Main -> MarketService settlement / forfeiture -> RunResults`. Extraction remains vulnerable until completion; only then stop combat.
-- V1 run rule: every run starts with $10,000; opening shorts does not debit or credit cash. Closing realizes P&L into run-local cash. Death forfeits all run P&L (including manually closed gains), cancels positions and restores starting capital. Extraction settles at current displayed prices. No permanent cash carryover or meta progression.
+- Loot boundary: `LootInteractor request -> Main -> RunInventory -> HUD / player load`; only successful extraction passes the manifest to `MarketService` for sale. Dropped/replaced objects return to reachable ground; never clone their IDs.
+- Market and cargo overlays are live: guards and damage never pause while inspecting them. The market immobilizes combat controls; cargo inspection preserves movement. Only terminal run outcomes disable security.
+- V1 run rule: start at $10,000; opening shorts does not change cash. Closing realizes run-local P&L. Death loses all cargo and run P&L (even closed gains), cancels positions and restores starting capital. Extraction settles shorts at displayed prices and sells carried assets once. No permanent cash carryover or meta progression.
 - Keep these boundaries explicit and avoid circular dependencies. In particular, combat/weapons must not know about the market, and economy must not depend on the player or rendering.
 
 ## Validation requirements
@@ -40,10 +43,14 @@ godot --headless --path . --script res://tests/market_flow_test.gd
 godot --headless --path . --script res://tests/security_flow_test.gd
 godot --headless --path . --script res://tests/run_account_test.gd
 godot --headless --path . --script res://tests/run_flow_test.gd
+godot --headless --path . --script res://tests/loot_logic_test.gd
+godot --headless --path . --script res://tests/loot_flow_test.gd
+godot --headless --path . --script res://tests/audio_lifecycle_test.gd
 ```
 
 - Also launch or render the real project in Godot 4.7.1 when the change can affect scenes, shaders, input, visuals, physics, or signals. Check for script, shader, signal, and runtime errors.
 - A task is not complete because the code looks correct: verify it proportionally to risk and report what was actually run.
+- Scene tests use `SceneCleanup.free_scene` and assert success before quitting. It observes actual node/stream/playback release across the asynchronous audio mixer; do not replace this with suppressed warnings or disabled audio.
 
 ## Workflow and delivery
 

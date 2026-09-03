@@ -108,6 +108,4 @@ func _spawn_main() -> Node3D:
 
 func _remove_main(main: Node3D) -> void:
 	Engine.time_scale = 1.0
-	main.queue_free()
-	await process_frame
-	await process_frame
+	_check(await SceneCleanup.free_scene(self, main), "scene and audio resources are released after scenario")

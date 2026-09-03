@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="LootDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/loot_definition.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "LAB ANALYZER"
+category = "LABORATORY"
+value = 3600.0
+weight_kg = 3.0
+slots = 1
+visual_kind = 1
+accent = Color(0.52, 0.61, 0.63, 1)

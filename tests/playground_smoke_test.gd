@@ -33,6 +33,7 @@ func _run() -> void:
 	_check(vita_equipment.size() == 3, "VITA adds exactly three separate critical machines")
 	_check(arc_equipment.size() == 3, "ARC adds exactly three separate grid assets")
 	_check(company_equipment.size() == 6, "the shared equipment pipeline registers both facilities")
+	_check(get_nodes_in_group("loot_pickups").size() == 6 and main.has_node("RunInventory") and main.has_node("InventoryHUD"), "six authored valuables share one physical inventory flow")
 	_check(audio != null and audio.has_method("play_world") and audio.has_method("play_ui"), "reusable audio service is present")
 	if audio:
 		var required_cues := [&"smg", &"metal_impact", &"machine_damaged", &"machine_destroyed", &"market_confirm", &"market_drop", &"profit_tick", &"profit_final", &"security_shot", &"security_alert", &"player_hit", &"extraction_start", &"run_settled"]
@@ -88,8 +89,6 @@ func _run() -> void:
 	_check(not target.is_in_group("targets"), "three shots kill and remove a security agent from the active set")
 
 	await create_timer(0.1, true, false, true).timeout
-	main.queue_free()
-	await process_frame
-	await process_frame
+	_check(await SceneCleanup.free_scene(self, main), "scene and audio references are actually released before process exit")
 	print("Smoke test complete.")
 	quit(1 if _failed else 0)

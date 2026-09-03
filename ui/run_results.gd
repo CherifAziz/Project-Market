@@ -8,6 +8,10 @@ signal restart_requested
 @onready var subtitle_label: Label = %ResultSubtitle
 @onready var starting_cash_label: Label = %StartingCash
 @onready var company_rows: VBoxContainer = %CompanyResults
+@onready var revenue_rows: VBoxContainer = %RevenueRows
+@onready var market_profit_label: Label = %MarketProfit
+@onready var loot_profit_label: Label = %LootProfit
+@onready var sold_items_label: Label = %SoldItems
 @onready var profit_caption: Label = %ProfitCaption
 @onready var profit_label: Label = %RunProfit
 @onready var cash_caption: Label = %CashCaption
@@ -36,9 +40,16 @@ func present(success: bool, summary: Dictionary) -> void:
 	profit_caption.text = "RUN PROFIT" if success else "PROFIT RETAINED"
 	cash_caption.text = "NEW NET CASH" if success else "NEXT RUN CASH"
 	profit_label.text = "$0"
-	profit_label.add_theme_color_override("font_color", Color("9fc49f") if summary["realized_pnl"] >= 0.0 else Color("c77c60"))
+	profit_label.add_theme_color_override("font_color", Color("9fc49f") if summary["run_profit"] >= 0.0 else Color("c77c60"))
 	cash_label.text = MoneyFormat.cash(summary["starting_cash"])
-	rule_label.text = "Run settled. No permanent progression.\nA new run starts with %s." % MoneyFormat.cash(summary["starting_cash"]) if success else "All open positions and all run gains — even closed gains — are discarded.\nStarting capital is restored. A new run starts with %s." % MoneyFormat.cash(summary["starting_cash"])
+	rule_label.text = "Run settled. No permanent progression.\nA new run starts with %s." % MoneyFormat.cash(summary["starting_cash"]) if success else "All cargo and all run gains — even closed gains — are lost.\nPositions discarded. A new run starts with %s." % MoneyFormat.cash(summary["starting_cash"])
+	market_profit_label.text = "$0"
+	loot_profit_label.text = "$0"
+	var sold_lines := PackedStringArray()
+	for item in summary["sold_items"]:
+		sold_lines.append("%s  ·  %s" % [item["name"], MoneyFormat.cash(item["value"])])
+	sold_items_label.text = "\n".join(sold_lines)
+	sold_items_label.visible = not sold_lines.is_empty()
 	title_label.add_theme_color_override("font_color", Color("c9d8c6") if success else Color("d7a58d"))
 	panel.modulate.a = 0.0
 	_presentation = create_tween().set_ignore_time_scale(true)
@@ -51,22 +62,25 @@ func present(success: bool, summary: Dictionary) -> void:
 			var name_label := Label.new()
 			name_label.text = "%s SHORT" % entry["ticker"]
 			name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-			name_label.add_theme_font_size_override("font_size", 20)
+			name_label.add_theme_font_size_override("font_size", 17)
 			name_label.add_theme_color_override("font_color", Color("bdbdae"))
 			var value_label := Label.new()
 			value_label.text = "$0"
-			value_label.add_theme_font_size_override("font_size", 23)
+			value_label.add_theme_font_size_override("font_size", 20)
 			value_label.add_theme_color_override("font_color", Color("9fc49f") if entry["realized_pnl"] >= 0.0 else Color("c77c60"))
 			row.add_child(name_label)
 			row.add_child(value_label)
 			company_rows.add_child(row)
 			_presentation.tween_callback(func() -> void: _play_cue(&"profit_tick", -5.0))
-			_presentation.tween_method(func(value: float) -> void: value_label.text = MoneyFormat.pnl(value), 0.0, float(entry["realized_pnl"]), 0.38).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-			_presentation.tween_interval(0.1)
-		_presentation.tween_method(func(value: float) -> void: profit_label.text = MoneyFormat.pnl(value), 0.0, float(summary["realized_pnl"]), 0.62).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-		_presentation.tween_method(func(value: float) -> void: cash_label.text = MoneyFormat.cash(value), float(summary["starting_cash"]), float(summary["cash"]), 0.72).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+			_presentation.tween_method(func(value: float) -> void: value_label.text = MoneyFormat.pnl(value), 0.0, float(entry["realized_pnl"]), 0.28).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+			_presentation.tween_interval(0.08)
+		_presentation.tween_method(func(value: float) -> void: market_profit_label.text = MoneyFormat.pnl(value), 0.0, float(summary["market_profit"]), 0.25)
+		_presentation.tween_method(func(value: float) -> void: loot_profit_label.text = MoneyFormat.pnl(value), 0.0, float(summary["stolen_assets"]), 0.35).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+		_presentation.tween_method(func(value: float) -> void: profit_label.text = MoneyFormat.pnl(value), 0.0, float(summary["run_profit"]), 0.45).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+		_presentation.tween_method(func(value: float) -> void: cash_label.text = MoneyFormat.cash(value), float(summary["starting_cash"]), float(summary["cash"]), 0.62).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 		_presentation.tween_callback(func() -> void: _play_cue(&"run_settled", 0.0))
 	company_rows.visible = success
+	revenue_rows.visible = success
 	restart_button.grab_focus()
 
 func get_summary() -> Dictionary:

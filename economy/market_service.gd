@@ -22,6 +22,8 @@ var _processed_world_events: Dictionary = {}
 var _reaction_queue: Array[Dictionary] = []
 var _processing_queue := false
 var _cash := 0.0
+var _loot_revenue := 0.0
+var _sold_items: Array[Dictionary] = []
 var _session_finished := false
 var _reaction_generation := 0
 var _active_price_tween: Tween
@@ -39,6 +41,8 @@ func _initialize_market() -> void:
 	_reaction_queue.clear()
 	_processing_queue = false
 	_cash = starting_cash
+	_loot_revenue = 0.0
+	_sold_items.clear()
 	_session_finished = false
 
 	for definition in companies:
@@ -134,18 +138,32 @@ func get_total_realized_pnl() -> float:
 func is_trading_enabled() -> bool:
 	return not _session_finished
 
-func settle_all_positions() -> Dictionary:
+func settle_all_positions(loot_manifest: Array[Dictionary] = []) -> Dictionary:
 	if not _session_finished:
 		_finish_session()
 		for company_id in _company_order:
 			if has_open_position(company_id):
 				_realize_position(company_id)
+		# The run coordinator supplies the inventory manifest, never a UI-computed total.
+		var sold_ids: Dictionary = {}
+		for item in loot_manifest:
+			var id := String(item.get("id", ""))
+			var value := float(item.get("value", -1.0))
+			if id.is_empty() or sold_ids.has(id) or value < 0.0 or not is_finite(value):
+				continue
+			sold_ids[id] = true
+			_sold_items.append(item.duplicate(true))
+			_loot_revenue = snappedf(_loot_revenue + value, 0.01)
+		_cash = snappedf(_cash + _loot_revenue, 0.01)
+		account_updated.emit()
 	return get_account_summary()
 
 func forfeit_run_profit() -> Dictionary:
 	if not _session_finished:
 		_finish_session()
 		_cash = starting_cash
+		_loot_revenue = 0.0
+		_sold_items.clear()
 		for company_id in _company_order:
 			var state: Dictionary = _states[company_id]
 			state["position"] = null
@@ -167,6 +185,10 @@ func get_account_summary() -> Dictionary:
 		"starting_cash": starting_cash,
 		"cash": _cash,
 		"realized_pnl": get_total_realized_pnl(),
+		"market_profit": get_total_realized_pnl(),
+		"stolen_assets": _loot_revenue,
+		"run_profit": snappedf(get_total_realized_pnl() + _loot_revenue, 0.01),
+		"sold_items": _sold_items.duplicate(true),
 		"unrealized_pnl": get_total_unrealized_pnl(),
 		"companies": company_results,
 	}

@@ -23,6 +23,7 @@ extends CanvasLayer
 var _player: PlayerController
 var _security_director: SecurityDirector
 var _extraction: ExtractionPoint
+var _loot_interactor: LootInteractor
 var _initial_target_count := 0
 var _focused_equipment: DestructibleEquipment
 var _damage_flash_tween: Tween
@@ -36,6 +37,7 @@ func _ready() -> void:
 	call_deferred("_bind_runtime_signals")
 
 func _bind_runtime_signals() -> void:
+	_loot_interactor = get_parent().get_node_or_null("LootInteractor") as LootInteractor
 	_extraction = get_tree().get_first_node_in_group("extraction_point") as ExtractionPoint
 	if is_instance_valid(_player):
 		if not _player.health_changed.is_connected(_on_player_health_changed):
@@ -137,6 +139,10 @@ func _update_equipment_context(delta: float) -> void:
 		equipment_context.position = equipment_context.position.lerp(desired_position, 1.0 - exp(-14.0 * delta))
 
 func _find_context_equipment() -> DestructibleEquipment:
+	if not is_instance_valid(_player) or not _player.is_gameplay_input_enabled():
+		return null
+	if is_instance_valid(_loot_interactor) and _loot_interactor.focused_pickup != null:
+		return null
 	var aimed := _equipment_under_cursor()
 	if aimed:
 		return aimed

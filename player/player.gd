@@ -15,6 +15,11 @@ signal died
 @export var acceleration := 42.0
 @export var deceleration := 55.0
 
+@export_group("Cargo")
+@export var unburdened_weight_kg := 4.0
+@export_range(0.0, 0.03, 0.001) var slowdown_per_kg := 0.01
+@export_range(0.0, 0.25, 0.01) var max_cargo_slowdown := 0.16
+
 @export_group("Dash")
 @export var dash_speed := 21.0
 @export var dash_duration := 0.14
@@ -25,6 +30,7 @@ signal died
 @onready var aim_cursor: MeshInstance3D = %AimCursor
 
 var health := 0.0
+var _carried_weight := 0.0
 var aim_direction := Vector3.FORWARD
 var _aim_point := Vector3.ZERO
 var _dash_direction := Vector3.FORWARD
@@ -76,7 +82,7 @@ func _physics_process(delta: float) -> void:
 		velocity.x = _dash_direction.x * dash_speed
 		velocity.z = _dash_direction.z * dash_speed
 	else:
-		var target_velocity := move_direction * move_speed
+		var target_velocity := move_direction * move_speed * get_carry_speed_multiplier()
 		var rate := acceleration if move_direction != Vector3.ZERO else deceleration
 		velocity.x = move_toward(velocity.x, target_velocity.x, rate * delta)
 		velocity.z = move_toward(velocity.z, target_velocity.z, rate * delta)
@@ -150,6 +156,13 @@ func set_gameplay_input_enabled(enabled: bool) -> void:
 
 func is_gameplay_input_enabled() -> bool:
 	return _gameplay_input_enabled
+
+func set_carried_weight(weight_kg: float) -> void:
+	_carried_weight = maxf(weight_kg, 0.0)
+
+func get_carry_speed_multiplier() -> float:
+	# Keep the dash's speed, cooldown and evasion window intact.
+	return 1.0 - minf(maxf(_carried_weight - unburdened_weight_kg, 0.0) * slowdown_per_kg, max_cargo_slowdown)
 
 func set_damage_enabled(enabled: bool) -> void:
 	_damage_enabled = enabled

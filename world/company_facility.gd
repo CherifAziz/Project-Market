@@ -10,6 +10,7 @@ enum FacilityType {
 }
 
 const EQUIPMENT_SCENE := preload("res://world/destructible_equipment.tscn")
+const LOOT_SCENE := preload("res://world/loot_pickup.tscn")
 
 @export var company: CompanyDefinition
 @export var facility_type: FacilityType = FacilityType.MEDICAL
@@ -28,6 +29,29 @@ func _ready() -> void:
 	else:
 		_build_medical_shell()
 	_spawn_equipment()
+	_spawn_loot()
+
+func _spawn_loot() -> void:
+	# Authored service-bay placements, behind the equipment line, not at the exit.
+	var specs: Array[Dictionary]
+	if facility_type == FacilityType.ENERGY:
+		specs = [
+			{"data": "arc_module", "at": Vector3(-0.85, 0.08, -0.68)},
+			{"data": "copper_spool", "at": Vector3(1.0, 0.08, -0.63)},
+			{"data": "power_component", "at": Vector3(2.72, 0.08, -0.62)},
+		]
+	else:
+		specs = [
+			{"data": "vita_prototype", "at": Vector3(0.55, 0.08, -0.27)},
+			{"data": "lab_analyzer", "at": Vector3(2.6, 0.08, -0.29)},
+			{"data": "sample_case", "at": Vector3(-1.7, 0.08, 0.12)},
+		]
+	for spec in specs:
+		var pickup := LOOT_SCENE.instantiate() as LootPickup
+		pickup.loot_id = "%s:%s" % [company.company_id, spec["data"]]
+		pickup.definition = load("res://data/loot/%s.tres" % spec["data"]) as LootDefinition
+		pickup.position = spec["at"]
+		add_child(pickup)
 
 func get_equipment() -> Array[DestructibleEquipment]:
 	return _equipment.duplicate()

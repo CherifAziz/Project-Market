@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="LootDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/loot_definition.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "SAMPLE CASE"
+category = "BIOTECH"
+value = 1600.0
+weight_kg = 1.0
+slots = 1
+visual_kind = 2
+accent = Color(0.66, 0.66, 0.48, 1)
